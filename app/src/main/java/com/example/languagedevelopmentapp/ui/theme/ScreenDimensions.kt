@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 
 class ScreenDimensions {
     companion object {
-
         val screenWidth: Dp
             @Composable
             @NonRestartableComposable
@@ -19,6 +18,5 @@ class ScreenDimensions {
         val screenHeight: Dp
             @Composable
             get() = LocalConfiguration.current.screenHeightDp.dp
-
     }
 }
