@@ -1,4 +1,4 @@
-package com.example.languagedevelopmentapp.ui.screen.login
+package com.example.languagedevelopmentapp.ui.screen.register
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +31,7 @@ import com.example.languagedevelopmentapp.ui.component.CustomButton
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     navigateTo: (String) -> Unit
 ) {
     Column(
@@ -41,22 +42,26 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        LoginScreenDetail(
-            navigateToRegister = {
-                navigateTo(Screens.RegisterScreen.route)
+        RegisterScreenDetail(
+            navigateToLogin = {
+                navigateTo(Screens.LoginScreen.route)
             }
         )
     }
 }
 
 @Composable
-fun LoginScreenDetail(navigateToRegister: () -> Unit) {
-
+fun RegisterScreenDetail(
+    navigateToLogin: () -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var surname by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordRepeat by remember { mutableStateOf("") }
 
     Text(
-        text = stringResource(id = R.string.sign_in_title),
+        text = stringResource(id = R.string.sign_up_title),
         style = MaterialTheme.typography.displayMedium,
         color = MaterialTheme.colorScheme.primary
     )
@@ -64,6 +69,18 @@ fun LoginScreenDetail(navigateToRegister: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        CustomAuthTextField(
+            value = name,
+            onValueChange = { name = it },
+            placeHolder = stringResource(id = R.string.name),
+            leadingIcon = Icons.Default.AccountCircle
+        )
+        CustomAuthTextField(
+            value = surname,
+            onValueChange = { surname = it },
+            placeHolder = stringResource(id = R.string.surname),
+            leadingIcon = Icons.Default.AccountCircle
+        )
         CustomAuthTextField(
             value = email,
             onValueChange = { email = it },
@@ -76,27 +93,32 @@ fun LoginScreenDetail(navigateToRegister: () -> Unit) {
             placeHolder = stringResource(id = R.string.password),
             leadingIcon = Icons.Default.Lock
         )
+        CustomAuthTextField(
+            value = passwordRepeat,
+            onValueChange = { passwordRepeat = it },
+            placeHolder = stringResource(id = R.string.password_repeat),
+            leadingIcon = Icons.Default.Lock
+        )
         Spacer(modifier = Modifier.padding(ScreenDimensions.screenWidth * 0.03f))
         CustomButton(
             modifier = Modifier
                 .fillMaxWidth(),
             onClick = {},
-            text = stringResource(id = R.string.sign_in)
+            text = stringResource(id = R.string.sign_up)
         )
         Row {
             Text(
-                text = stringResource(id = R.string.no_acc_q),
+                text = stringResource(id = R.string.have_acc_q),
                 color = MaterialTheme.colorScheme.outline
             )
             Text(
                 modifier = Modifier
                     .clickable(
                         onClick = {
-                            navigateToRegister()
+                            navigateToLogin()
                         }
                     ),
-                text = stringResource(id = R.string.sign_up)
-
+                text = stringResource(id = R.string.sign_in)
             )
         }
     }

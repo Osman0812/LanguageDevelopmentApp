@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.languagedevelopmentapp.ui.screen.login.LoginScreen
+import com.example.languagedevelopmentapp.ui.screen.MainScreen
 
 @Composable
 fun RootNavGraph(
@@ -16,8 +16,8 @@ fun RootNavGraph(
         startDestination = Graph.AUTH
     ) {
         authNavGraph(navController = navHostController)
-        composable(route = Graph.AUTH) {
-            LoginScreen()
+        composable(route = Graph.MAIN) {
+            MainScreen()
         }
     }
 }
