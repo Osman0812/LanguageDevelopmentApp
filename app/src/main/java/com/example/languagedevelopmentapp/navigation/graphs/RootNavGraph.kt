@@ -1,10 +1,10 @@
-package com.example.languagedevelopmentapp.navigation
+package com.example.languagedevelopmentapp.navigation.graphs
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.languagedevelopmentapp.ui.screen.MainScreen
+import com.example.languagedevelopmentapp.ui.screen.main.MainScreen
 
 @Composable
 fun RootNavGraph(
@@ -13,7 +13,7 @@ fun RootNavGraph(
     NavHost(
         navController = navHostController,
         route = Graph.ROOT,
-        startDestination = Graph.AUTH
+        startDestination = Graph.MAIN
     ) {
         authNavGraph(navController = navHostController)
         composable(route = Graph.MAIN) {
