@@ -1,9 +1,10 @@
-package com.example.languagedevelopmentapp.navigation
+package com.example.languagedevelopmentapp.navigation.graphs
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.screen.login.LoginScreen
 import com.example.languagedevelopmentapp.ui.screen.register.RegisterScreen
 
