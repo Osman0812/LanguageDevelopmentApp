@@ -25,7 +25,7 @@ open class BottomBarScreen(
     )
 
     data object Practice : BottomBarScreen(
-        route = "Practice",
+        route = "PRACTICE",
         icon = Icons.Default.Star,
         title = "Practice"
     )

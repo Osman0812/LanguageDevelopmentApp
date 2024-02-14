@@ -11,8 +11,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.graphs.MainNavGraph
@@ -28,25 +30,33 @@ fun MainScreen(
         BottomBarScreen.Practice,
         BottomBarScreen.Profile
     )
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    val bottomBarDestination = screens.any { it.route == currentDestination?.route }
+
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                screens.forEachIndexed { index, screen ->
-                    NavigationBarItem(
-                        label = {
-                            Text(text = screen.title)
-                        },
-                        selected = false,
-                        onClick = { /*TODO*/ },
-                        icon = {
-                            BadgedBox(
-                                badge = {
+            if (bottomBarDestination){
+                NavigationBar {
+                    screens.forEachIndexed { index, screen ->
+                        NavigationBarItem(
+                            label = {
+                                Text(text = screen.title)
+                            },
+                            selected = false,
+                            onClick = { /*TODO*/ },
+                            icon = {
+                                BadgedBox(
+                                    badge = {
 
-                                }) {
-                                Icon(imageVector = screen.icon, contentDescription = "")
+                                    }) {
+                                    Icon(imageVector = screen.icon, contentDescription = "")
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

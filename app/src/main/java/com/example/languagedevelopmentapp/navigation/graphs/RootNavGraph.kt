@@ -26,4 +26,5 @@ object Graph {
     const val ROOT = "GRAPH_ROOT"
     const val MAIN = "MAIN_GRAPH"
     const val AUTH = "AUTH_GRAPH"
+    const val SUB = "SUB_GRAPH"
 }
