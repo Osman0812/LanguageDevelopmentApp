@@ -9,24 +9,38 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.Screens
+import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.PracticeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileScreen
+import com.example.languagedevelopmentapp.ui.screen.main.vocabulary.VocabularyScreen
 
 @Composable
 fun MainNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         route = Graph.MAIN,
-        startDestination = Graph.SUB
+        startDestination = BottomBarScreen.Home.route
     ) {
+        composable(route = BottomBarScreen.Home.route) {
+            HomeScreen(
+                navigateToBack = { navController.popBackStack() }
+            )
+        }
         composable(route = BottomBarScreen.Practice.route) {
             PracticeScreen(
                 navigateToBack = { navController.popBackStack() }
             )
         }
-        subNavGraph(navController)
+        composable(route = BottomBarScreen.Vocabulary.route) {
+            VocabularyScreen(
+            )
+        }
+        composable(route = BottomBarScreen.Profile.route) {
+            ProfileScreen(
+            )
+        }
     }
 }
-
 private fun NavGraphBuilder.subNavGraph(navController: NavController) {
     navigation(
         route = Graph.SUB,
