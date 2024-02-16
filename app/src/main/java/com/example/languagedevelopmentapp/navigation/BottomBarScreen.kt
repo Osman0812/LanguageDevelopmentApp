@@ -17,19 +17,16 @@ open class BottomBarScreen(
         icon = Icons.Default.List,
         title = "My Words"
     )
-
     data object Home : BottomBarScreen(
-        route = "HOME_BAR",
+        route = "HOME",
         icon = Icons.Default.Home,
         title = "Home"
     )
-
     data object Practice : BottomBarScreen(
         route = "PRACTICE",
         icon = Icons.Default.Star,
         title = "Practice"
     )
-
     data object Profile : BottomBarScreen(
         route = "PROFILE",
         icon = Icons.Default.Person,
