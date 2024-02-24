@@ -22,9 +22,7 @@ fun MainNavGraph(navController: NavHostController) {
         startDestination = BottomBarScreen.Home.route
     ) {
         composable(route = BottomBarScreen.Home.route) {
-            HomeScreen(
-                navigateToBack = { navController.popBackStack() }
-            )
+            HomeScreen()
         }
         composable(route = BottomBarScreen.Practice.route) {
             PracticeScreen(
@@ -32,12 +30,10 @@ fun MainNavGraph(navController: NavHostController) {
             )
         }
         composable(route = BottomBarScreen.Vocabulary.route) {
-            VocabularyScreen(
-            )
+            VocabularyScreen()
         }
         composable(route = BottomBarScreen.Profile.route) {
-            ProfileScreen(
-            )
+            ProfileScreen()
         }
     }
 }
