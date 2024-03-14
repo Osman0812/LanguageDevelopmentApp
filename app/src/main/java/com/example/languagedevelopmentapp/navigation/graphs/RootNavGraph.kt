@@ -13,7 +13,7 @@ fun RootNavGraph(
     NavHost(
         navController = navHostController,
         route = Graph.ROOT,
-        startDestination = Graph.MAIN
+        startDestination = Graph.AUTH
     ) {
         authNavGraph(navController = navHostController)
         composable(route = Graph.MAIN) {

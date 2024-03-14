@@ -12,4 +12,5 @@
     <string name="no_acc_q">Don\'t have an account?</string>
     <string name="have_acc_q">Already have an account?</string>
     <string name="search_text_field_placeholder">Kelime ara</string>
+    <string name="register_alert_dialog_title">Kayıt</string>
 </resources>

@@ -16,24 +16,27 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.component.CustomAuthTextField
 import com.example.languagedevelopmentapp.ui.component.CustomButton
+import com.example.languagedevelopmentapp.ui.component.CustomDialog
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
 fun RegisterScreen(
-    navigateTo: (String) -> Unit
+    navigateTo: (String) -> Unit,
+    navigateToMain: () -> Unit,
+    viewModel: RegisterScreenViewModel = hiltViewModel()
 ) {
+    val registerState by viewModel.registerState.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -45,21 +48,25 @@ fun RegisterScreen(
         RegisterScreenDetail(
             navigateToLogin = {
                 navigateTo(Screens.LoginScreen.route)
-            }
+            },
+            onRegister = viewModel::register,
+            registerState = registerState,
+            onInputChange = viewModel::onInputChange,
+            onClearState = viewModel::clearState,
+            navigateToMain = navigateToMain
         )
     }
 }
 
 @Composable
 fun RegisterScreenDetail(
-    navigateToLogin: () -> Unit
+    navigateToLogin: () -> Unit,
+    onClearState: () -> Unit,
+    onRegister: () -> Unit,
+    registerState: RegisterUiState,
+    onInputChange: (RegisterInputField, Any) -> Unit,
+    navigateToMain: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var surname by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordRepeat by remember { mutableStateOf("") }
-
     Text(
         text = stringResource(id = R.string.sign_up_title),
         style = MaterialTheme.typography.displayMedium,
@@ -70,32 +77,32 @@ fun RegisterScreenDetail(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CustomAuthTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = registerState.name,
+            onValueChange = { onInputChange(RegisterInputField.Name, it) },
             placeHolder = stringResource(id = R.string.name),
             leadingIcon = Icons.Default.AccountCircle
         )
         CustomAuthTextField(
-            value = surname,
-            onValueChange = { surname = it },
+            value = registerState.surname,
+            onValueChange = { onInputChange(RegisterInputField.Surname, it) },
             placeHolder = stringResource(id = R.string.surname),
             leadingIcon = Icons.Default.AccountCircle
         )
         CustomAuthTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = registerState.email,
+            onValueChange = { onInputChange(RegisterInputField.Email, it) },
             placeHolder = stringResource(id = R.string.email),
             leadingIcon = Icons.Default.Email
         )
         CustomAuthTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = registerState.password,
+            onValueChange = { onInputChange(RegisterInputField.Password, it) },
             placeHolder = stringResource(id = R.string.password),
             leadingIcon = Icons.Default.Lock
         )
         CustomAuthTextField(
-            value = passwordRepeat,
-            onValueChange = { passwordRepeat = it },
+            value = registerState.passwordRepeat,
+            onValueChange = { onInputChange(RegisterInputField.PasswordRepeat, it) },
             placeHolder = stringResource(id = R.string.password_repeat),
             leadingIcon = Icons.Default.Lock
         )
@@ -103,9 +110,24 @@ fun RegisterScreenDetail(
         CustomButton(
             modifier = Modifier
                 .fillMaxWidth(),
-            onClick = {},
+            onClick = { onRegister() },
             text = stringResource(id = R.string.sign_up)
         )
+        if (registerState.successMessage != null) {
+            CustomDialog(
+                text = registerState.successMessage,
+                title = stringResource(id = R.string.register_alert_dialog_title),
+                onClick = onClearState
+            )
+            navigateToMain()
+        }
+        if (registerState.errorMessage != null) {
+            CustomDialog(
+                text = registerState.errorMessage,
+                title = stringResource(id = R.string.register_alert_dialog_title),
+                onClick = { onClearState() }
+            )
+        }
         Row {
             Text(
                 text = stringResource(id = R.string.have_acc_q),
