@@ -8,12 +8,13 @@ import com.example.languagedevelopmentapp.ui.screen.main.MainScreen
 
 @Composable
 fun RootNavGraph(
-    navHostController: NavHostController
+    navHostController: NavHostController,
+    currentUser: Boolean
 ) {
     NavHost(
         navController = navHostController,
         route = Graph.ROOT,
-        startDestination = Graph.AUTH
+        startDestination = Graph.AUTH//Graph.MAIN.takeIf { currentUser } ?: Graph.AUTH
     ) {
         authNavGraph(navController = navHostController)
         composable(route = Graph.MAIN) {
