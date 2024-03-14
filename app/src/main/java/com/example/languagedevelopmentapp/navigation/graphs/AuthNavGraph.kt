@@ -10,13 +10,19 @@ import com.example.languagedevelopmentapp.ui.screen.register.RegisterScreen
 
 fun NavGraphBuilder.authNavGraph(navController: NavController) {
     navigation(
-        startDestination = Screens.LoginScreen.route,
+        startDestination = Screens.RegisterScreen.route,
         route = Graph.AUTH
     ) {
         composable(route = Screens.LoginScreen.route) {
             LoginScreen(
                 navigateTo = {
                     navController.navigate(it)
+                },
+                navigateToMain = {
+                    navController.apply {
+                        popBackStack()
+                        navigate(Graph.MAIN)
+                    }
                 }
             )
         }
@@ -24,7 +30,14 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
             RegisterScreen(
                 navigateTo = {
                     navController.navigate(it)
+                },
+                navigateToMain = {
+                    navController.apply {
+                        popBackStack()
+                        navigate(Graph.MAIN)
+                    }
                 }
+
             )
         }
     }
