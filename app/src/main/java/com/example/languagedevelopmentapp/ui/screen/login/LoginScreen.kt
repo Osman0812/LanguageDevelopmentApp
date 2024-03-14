@@ -15,14 +15,14 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.component.CustomAuthTextField
@@ -31,8 +31,11 @@ import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
 fun LoginScreen(
-    navigateTo: (String) -> Unit
+    viewModel: LoginScreenViewModel = hiltViewModel(),
+    navigateTo: (String) -> Unit,
+    navigateToMain: () -> Unit
 ) {
+    val loginState by viewModel.loginState.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -44,17 +47,25 @@ fun LoginScreen(
         LoginScreenDetail(
             navigateToRegister = {
                 navigateTo(Screens.RegisterScreen.route)
-            }
+            },
+            loginState = loginState,
+            viewModel::login,
+            navigateToMain = navigateToMain,
+            onEmailChange = viewModel::onEmailChange,
+            onPasswordChange = viewModel::onPasswordChange,
         )
     }
 }
 
 @Composable
-fun LoginScreenDetail(navigateToRegister: () -> Unit) {
-
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
+fun LoginScreenDetail(
+    navigateToRegister: () -> Unit,
+    loginState: LoginUiState,
+    onLogin: () -> Unit,
+    navigateToMain: () -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+) {
     Text(
         text = stringResource(id = R.string.sign_in_title),
         style = MaterialTheme.typography.displayMedium,
@@ -65,14 +76,14 @@ fun LoginScreenDetail(navigateToRegister: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CustomAuthTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = loginState.email,
+            onValueChange = { onEmailChange(it) },
             placeHolder = stringResource(id = R.string.email),
             leadingIcon = Icons.Default.Email
         )
         CustomAuthTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = loginState.password,
+            onValueChange = { onPasswordChange(it) },
             placeHolder = stringResource(id = R.string.password),
             leadingIcon = Icons.Default.Lock
         )
@@ -80,7 +91,9 @@ fun LoginScreenDetail(navigateToRegister: () -> Unit) {
         CustomButton(
             modifier = Modifier
                 .fillMaxWidth(),
-            onClick = {},
+            onClick = {
+                onLogin()
+            },
             text = stringResource(id = R.string.sign_in)
         )
         Row {
@@ -98,6 +111,11 @@ fun LoginScreenDetail(navigateToRegister: () -> Unit) {
                 text = stringResource(id = R.string.sign_up)
 
             )
+        }
+    }
+    LaunchedEffect(key1 = loginState) {
+        if (loginState.isLogged == true) {
+            navigateToMain()
         }
     }
 }

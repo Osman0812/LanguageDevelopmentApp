@@ -17,6 +17,12 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
             LoginScreen(
                 navigateTo = {
                     navController.navigate(it)
+                },
+                navigateToMain = {
+                    navController.apply {
+                        popBackStack()
+                        navigate(Graph.MAIN)
+                    }
                 }
             )
         }

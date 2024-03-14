@@ -13,4 +13,5 @@
     <string name="have_acc_q">Already have an account?</string>
     <string name="search_text_field_placeholder">Kelime ara</string>
     <string name="register_alert_dialog_title">Kayıt</string>
+    <string name="invalid_inputs_error">Lütfen geçerli bilgiler giriniz!</string>
 </resources>
