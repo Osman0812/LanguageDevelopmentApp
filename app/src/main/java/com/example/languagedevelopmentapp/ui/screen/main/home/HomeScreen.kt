@@ -18,6 +18,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,9 +30,13 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    viewModel: HomeScreenViewModel = hiltViewModel()
+) {
+    val wordState by viewModel.wordState.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -47,7 +52,9 @@ fun HomeScreen() {
                     color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(10.dp)
                 )
-                .weight(0.9f)
+                .weight(0.9f),
+            onWriteStory = viewModel::translate,
+            wordState.translate
         )
     }
 }
@@ -55,10 +62,15 @@ fun HomeScreen() {
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenBody(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onWriteStory: (String) -> Unit,
+    translate: String
 ) {
+    var selectedWord by remember {
+        mutableStateOf("")
+    }
     val text =
-        " Selected Text Selam ben nasılsın iyim privet asdsadsaasdasdas Selected Text Selam ben nasılsın iyim privet nataşa Selected Text Selam ben nasılsın iyim privet nataşa"
+        " My name is Thomas Shelby, i am 37 yers old. Born in Birmingham in 1921."
     val splittedText = text.split(" ")
     var isSelected by remember { mutableStateOf(false) }
     val qrCodeSheetState = rememberModalBottomSheetState(
@@ -72,7 +84,7 @@ fun HomeScreenBody(
             ClickableText(
                 text = AnnotatedString(text = text),
                 onClick = {
-                    Log.d("selected", text)
+                    selectedWord = text
                     isSelected = true
                 },
                 softWrap = true,
@@ -88,16 +100,21 @@ fun HomeScreenBody(
             sheetState = qrCodeSheetState,
             containerColor = MaterialTheme.colorScheme.primary,
         ) {
-            FooterBody()
+            FooterBody(
+                word = selectedWord,
+                wordTranslate = translate
+            )
+            onWriteStory(text)
         }
     }
 }
 @Composable
 fun FooterBody(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    word: String,
+    wordTranslate: String
 ) {
-    Text(text = "Selected Text Selam ben nasılsın iyim privet asdsadsaasdasdas Selected Text Selam be Selected Text Selam ben nasılsın iyim privet asdsadsaasdasdas Selected Text Selam be")
-
+    Text(text = "$word meaning is $wordTranslate")
 }
 
 @Preview
