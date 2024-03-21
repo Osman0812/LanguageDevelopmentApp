@@ -1,6 +1,5 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -37,6 +36,7 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val wordState by viewModel.wordState.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +54,7 @@ fun HomeScreen(
                 )
                 .weight(0.9f),
             onWriteStory = viewModel::translate,
-            wordState.translate
+            translate = wordState.translate
         )
     }
 }
@@ -104,10 +104,11 @@ fun HomeScreenBody(
                 word = selectedWord,
                 wordTranslate = translate
             )
-            onWriteStory(text)
+            onWriteStory(selectedWord)
         }
     }
 }
+
 @Composable
 fun FooterBody(
     modifier: Modifier = Modifier,
