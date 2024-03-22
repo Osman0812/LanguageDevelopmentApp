@@ -1,27 +1,34 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -30,13 +37,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val wordState by viewModel.wordState.collectAsState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -73,7 +80,7 @@ fun HomeScreenBody(
         " My name is Thomas Shelby, i am 37 yers old. Born in Birmingham in 1921."
     val splittedText = text.split(" ")
     var isSelected by remember { mutableStateOf(false) }
-    val qrCodeSheetState = rememberModalBottomSheetState(
+    val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
     FlowRow(
@@ -96,14 +103,25 @@ fun HomeScreenBody(
     }
     if (isSelected) {
         ModalBottomSheet(
-            onDismissRequest = { isSelected = false },
-            sheetState = qrCodeSheetState,
-            containerColor = MaterialTheme.colorScheme.primary,
+            onDismissRequest = {
+                isSelected = false
+            },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle()
+                BottomSheetDefaults.SheetPeekHeight
+            }
         ) {
             FooterBody(
+                modifier = Modifier
+                    .height(ScreenDimensions.screenHeight * 0.3f)
+                    .padding(start = 15.dp, end = 15.dp),
                 word = selectedWord,
                 wordTranslate = translate
             )
+        }
+        LaunchedEffect(key1 = Unit) {
             onWriteStory(selectedWord)
         }
     }
@@ -115,7 +133,35 @@ fun FooterBody(
     word: String,
     wordTranslate: String
 ) {
-    Text(text = "$word meaning is $wordTranslate")
+    Column(
+        modifier = modifier
+    ) {
+        Row (
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = "Meaning ",
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "($word)",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Row {
+            if (wordTranslate.isEmpty()){
+                CircularProgressIndicator()
+            }
+            Text(
+                text = wordTranslate,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
 }
 
 @Preview
