@@ -96,4 +96,7 @@ dependencies {
 
     //Gemini
     implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
+
+    // compose material3
+    implementation("com.github.skydoves:flexible-bottomsheet-material3:0.1.2")
 }
