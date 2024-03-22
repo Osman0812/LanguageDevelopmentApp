@@ -1,7 +1,6 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.BottomSheetDefaults
@@ -44,6 +44,7 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val wordState by viewModel.wordState.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -60,8 +61,9 @@ fun HomeScreen(
                     shape = RoundedCornerShape(10.dp)
                 )
                 .weight(0.9f),
-            onWriteStory = viewModel::translate,
-            translate = wordState.translate
+            onTranslate = viewModel::translate,
+            wordUiState = wordState,
+            onOtherUsages = viewModel::otherUsages
         )
     }
 }
@@ -70,8 +72,9 @@ fun HomeScreen(
 @Composable
 fun HomeScreenBody(
     modifier: Modifier = Modifier,
-    onWriteStory: (String) -> Unit,
-    translate: String
+    onTranslate: (String) -> Unit,
+    onOtherUsages: (String) -> Unit,
+    wordUiState: HomeScreenUiModel
 ) {
     var selectedWord by remember {
         mutableStateOf("")
@@ -81,7 +84,7 @@ fun HomeScreenBody(
     val splittedText = text.split(" ")
     var isSelected by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
+        skipPartiallyExpanded = false
     )
     FlowRow(
         modifier = modifier
@@ -108,21 +111,19 @@ fun HomeScreenBody(
             },
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.background,
-            dragHandle = {
-                BottomSheetDefaults.DragHandle()
-                BottomSheetDefaults.SheetPeekHeight
-            }
+            dragHandle = { BottomSheetDefaults.DragHandle() }
         ) {
             FooterBody(
                 modifier = Modifier
-                    .height(ScreenDimensions.screenHeight * 0.3f)
+                    .height(ScreenDimensions.screenHeight * 0.9f)
                     .padding(start = 15.dp, end = 15.dp),
                 word = selectedWord,
-                wordTranslate = translate
+                wordUiState = wordUiState
             )
         }
         LaunchedEffect(key1 = Unit) {
-            onWriteStory(selectedWord)
+            onTranslate(selectedWord)
+            onOtherUsages(selectedWord)
         }
     }
 }
@@ -131,37 +132,64 @@ fun HomeScreenBody(
 fun FooterBody(
     modifier: Modifier = Modifier,
     word: String,
-    wordTranslate: String
+    wordUiState: HomeScreenUiModel
 ) {
-    Column(
+    LazyColumn(
         modifier = modifier
     ) {
-        Row (
-            verticalAlignment = Alignment.CenterVertically
-        ){
+        item {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Meaning ",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "($word)",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Row {
+                if (wordUiState.translate.isEmpty()) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.background
+                    )
+                }
+                Text(
+                    text = wordUiState.translate,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        item {
             Text(
-                text = "Meaning ",
-                style = MaterialTheme.typography.displaySmall,
+                text = "Synonyms ",
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Text(
-                text = "($word)",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+
+            Row {
+                if (wordUiState.otherUsages.isEmpty()) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.background
+                    )
+                }
+                Text(
+                    text = wordUiState.otherUsages,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
         }
 
-        Row {
-            if (wordTranslate.isEmpty()){
-                CircularProgressIndicator()
-            }
-            Text(
-                text = wordTranslate,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
     }
+
 }
 
 @Preview

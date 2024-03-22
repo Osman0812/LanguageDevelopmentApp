@@ -18,19 +18,28 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
 
     private var _wordState = MutableStateFlow(HomeScreenUiModel())
     var wordState = _wordState.asStateFlow()
+    private val generativeModel = GenerativeModel(
+    modelName = "gemini-pro",
+    apiKey = BuildConfig.GEMINI_API_KEY
+    )
     fun translate(word: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val generativeModel = GenerativeModel(
-                modelName = "gemini-pro",
-                apiKey = BuildConfig.GEMINI_API_KEY
-            )
             val prompt = "Write with one word the meaning of $word in turkish."
-            Log.d("word", word)
             val response = generativeModel.generateContent(content {
                 text(prompt)
             })
             _wordState.value = _wordState.value.copy(translate = response.text ?: "")
-            Log.d("response", _wordState.value.translate)
         }
     }
+
+    fun otherUsages(word: String) {
+        viewModelScope.launch {
+            Log.d("word",word)
+            val prompt = "write synonyms of \"$word\" in a row"
+            val response = generativeModel.generateContent(prompt)
+            Log.d("response",response.text.toString())
+            _wordState.value = _wordState.value.copy(otherUsages = response.text ?: "")
+        }
+    }
+    //"Give examples of $word used in sentences such as singular, plural etc."
 }
