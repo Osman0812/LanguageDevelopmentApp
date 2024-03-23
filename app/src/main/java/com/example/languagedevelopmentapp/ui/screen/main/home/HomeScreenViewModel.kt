@@ -58,6 +58,14 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun wordExamples(word: String) {
+        viewModelScope.launch {
+            val prompt = "Give examples of $word used in sentences such as singular, plural etc."
+            val response = generativeModel.generateContent(prompt = prompt)
+            _wordState.value = _wordState.value.copy(wordExampleText = response.text.toString())
+        }
+    }
+
     private fun extractWords(text: String): List<String> {
         val words = text.split("\\s".toRegex())
         return words.filter { it.matches(Regex("[a-zA-Z]+")) }
@@ -67,10 +75,6 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         val words = text.split("\\s".toRegex())
         return words.filter { it.matches(Regex("[a-zA-ZçğıöşüÇĞİÖŞÜ]+")) }
     }
-
-
-    //"Give examples of $word used in sentences such as singular, plural etc."
-
     fun clearState() {
         _wordState.value = _wordState.value.copy(
             translate = "",

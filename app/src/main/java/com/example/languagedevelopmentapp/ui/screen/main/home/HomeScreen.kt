@@ -66,7 +66,8 @@ fun HomeScreen(
             onTranslate = viewModel::translate,
             wordUiState = wordState,
             onOtherUsagesEnglish = viewModel::otherUsagesEnglish,
-            onClearState = viewModel::clearState
+            onClearState = viewModel::clearState,
+            onWordExample = viewModel::wordExamples
         )
     }
 }
@@ -78,6 +79,7 @@ fun HomeScreenBody(
     onTranslate: (String) -> Unit,
     onOtherUsagesEnglish: (String) -> Unit,
     wordUiState: HomeScreenUiModel,
+    onWordExample: (String) -> Unit,
     onClearState: () -> Unit
 ) {
     var selectedWord by remember {
@@ -130,6 +132,7 @@ fun HomeScreenBody(
         LaunchedEffect(key1 = Unit) {
             onTranslate(selectedWord)
             onOtherUsagesEnglish(selectedWord)
+            onWordExample(selectedWord)
         }
     }
 }
@@ -187,7 +190,7 @@ fun FooterBody(
             )
             val list = wordUiState.otherUsagesEnglish.zip(wordUiState.otherUsagesTurkish)
             Column {
-                if (list.isEmpty()) {
+                if (wordUiState.otherUsagesTurkish.isEmpty() || wordUiState.otherUsagesEnglish.isEmpty()) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.background
                     )
@@ -216,6 +219,14 @@ fun FooterBody(
                     .padding(top = 10.dp),
                 color = MaterialTheme.colorScheme.background,
                 thickness = 1.dp
+            )
+        }
+
+        item {
+            Text(
+                text = wordUiState.wordExampleText,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
