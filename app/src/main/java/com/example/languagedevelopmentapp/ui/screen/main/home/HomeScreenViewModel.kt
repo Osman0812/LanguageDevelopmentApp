@@ -19,9 +19,10 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
     private var _wordState = MutableStateFlow(HomeScreenUiModel())
     var wordState = _wordState.asStateFlow()
     private val generativeModel = GenerativeModel(
-    modelName = "gemini-pro",
-    apiKey = BuildConfig.GEMINI_API_KEY
+        modelName = "gemini-pro",
+        apiKey = BuildConfig.GEMINI_API_KEY
     )
+
     fun translate(word: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val prompt = "Write with one word the meaning of $word in turkish."
@@ -32,14 +33,49 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun otherUsages(word: String) {
+    fun otherUsagesEnglish(word: String) {
         viewModelScope.launch {
-            Log.d("word",word)
-            val prompt = "write synonyms of \"$word\" in a row"
+            val prompt = "write 5 synonyms of \"$word\""
             val response = generativeModel.generateContent(prompt)
-            Log.d("response",response.text.toString())
-            _wordState.value = _wordState.value.copy(otherUsages = response.text ?: "")
+            val words = response.text
+            val wordList = extractWords(words ?: "")
+            Log.d("words", words.toString())
+            _wordState.value = _wordState.value.copy(otherUsagesEnglish = wordList)
+            launch {
+                otherUsagesTurkish(words.toString())
+            }
         }
     }
+
+    private fun otherUsagesTurkish(word: String) {
+        viewModelScope.launch {
+            val prompt = "return only 5 turkish meanings of \"$word\""
+            val response = generativeModel.generateContent(prompt)
+            val words = response.text
+            val wordList = extractWordsTurkish(words ?: "")
+            Log.d("turkish", words.toString())
+            _wordState.value = _wordState.value.copy(otherUsagesTurkish = wordList)
+        }
+    }
+
+    private fun extractWords(text: String): List<String> {
+        val words = text.split("\\s".toRegex())
+        return words.filter { it.matches(Regex("[a-zA-Z]+")) }
+    }
+
+    private fun extractWordsTurkish(text: String): List<String> {
+        val words = text.split("\\s".toRegex())
+        return words.filter { it.matches(Regex("[a-zA-ZçğıöşüÇĞİÖŞÜ]+")) }
+    }
+
+
     //"Give examples of $word used in sentences such as singular, plural etc."
+
+    fun clearState() {
+        _wordState.value = _wordState.value.copy(
+            translate = "",
+            otherUsagesEnglish = emptyList(),
+            otherUsagesTurkish = emptyList()
+        )
+    }
 }

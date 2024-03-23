@@ -1,6 +1,7 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -30,13 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
@@ -44,7 +47,6 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val wordState by viewModel.wordState.collectAsState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,7 +65,8 @@ fun HomeScreen(
                 .weight(0.9f),
             onTranslate = viewModel::translate,
             wordUiState = wordState,
-            onOtherUsages = viewModel::otherUsages
+            onOtherUsagesEnglish = viewModel::otherUsagesEnglish,
+            onClearState = viewModel::clearState
         )
     }
 }
@@ -73,8 +76,9 @@ fun HomeScreen(
 fun HomeScreenBody(
     modifier: Modifier = Modifier,
     onTranslate: (String) -> Unit,
-    onOtherUsages: (String) -> Unit,
-    wordUiState: HomeScreenUiModel
+    onOtherUsagesEnglish: (String) -> Unit,
+    wordUiState: HomeScreenUiModel,
+    onClearState: () -> Unit
 ) {
     var selectedWord by remember {
         mutableStateOf("")
@@ -94,6 +98,7 @@ fun HomeScreenBody(
             ClickableText(
                 text = AnnotatedString(text = text),
                 onClick = {
+                    onClearState()
                     selectedWord = text
                     isSelected = true
                 },
@@ -115,6 +120,7 @@ fun HomeScreenBody(
         ) {
             FooterBody(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .height(ScreenDimensions.screenHeight * 0.9f)
                     .padding(start = 15.dp, end = 15.dp),
                 word = selectedWord,
@@ -123,7 +129,7 @@ fun HomeScreenBody(
         }
         LaunchedEffect(key1 = Unit) {
             onTranslate(selectedWord)
-            onOtherUsages(selectedWord)
+            onOtherUsagesEnglish(selectedWord)
         }
     }
 }
@@ -135,14 +141,15 @@ fun FooterBody(
     wordUiState: HomeScreenUiModel
 ) {
     LazyColumn(
-        modifier = modifier
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Meaning ",
+                    text = stringResource(id = R.string.meaning_text),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -165,35 +172,51 @@ fun FooterBody(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+            Divider(
+                modifier = Modifier
+                    .padding(top = 10.dp),
+                color = MaterialTheme.colorScheme.background,
+                thickness = 1.dp
+            )
         }
         item {
             Text(
-                text = "Synonyms ",
+                text = stringResource(id = R.string.synonyms_text),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-
-            Row {
-                if (wordUiState.otherUsages.isEmpty()) {
+            val list = wordUiState.otherUsagesEnglish.zip(wordUiState.otherUsagesTurkish)
+            Column {
+                if (list.isEmpty()) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.background
                     )
                 }
-                Text(
-                    text = wordUiState.otherUsages,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                list.forEach {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = it.first,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Text(
+                            text = "(${it.second})",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
-
+            Divider(
+                modifier = Modifier
+                    .padding(top = 10.dp),
+                color = MaterialTheme.colorScheme.background,
+                thickness = 1.dp
+            )
         }
-
     }
-
-}
-
-@Preview
-@Composable
-fun HomeScreenReview() {
-    HomeScreen()
 }

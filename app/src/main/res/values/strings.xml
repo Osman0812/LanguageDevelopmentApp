@@ -14,4 +14,6 @@
     <string name="search_text_field_placeholder">Kelime ara</string>
     <string name="register_alert_dialog_title">Kayıt</string>
     <string name="invalid_inputs_error">Lütfen geçerli bilgiler giriniz!</string>
+    <string name="meaning_text">Meaning </string>
+    <string name="synonyms_text">Synonyms </string>
 </resources>
