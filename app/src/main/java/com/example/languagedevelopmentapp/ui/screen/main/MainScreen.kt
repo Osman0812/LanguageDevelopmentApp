@@ -98,6 +98,7 @@ fun RowScope.BottomBarItem(
     )
 }
 
+
 fun navigateToBottomBarScreen(
     navController: NavHostController,
     screen: BottomBarScreen
@@ -110,5 +111,6 @@ fun navigateToBottomBarScreen(
         restoreState = true
     }
 }
+
 
 

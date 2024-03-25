@@ -10,6 +10,7 @@ import androidx.navigation.navigation
 import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.navigateToBottomBarScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.PracticeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileScreen
 import com.example.languagedevelopmentapp.ui.screen.main.vocabulary.VocabularyScreen
@@ -22,7 +23,12 @@ fun MainNavGraph(navController: NavHostController) {
         startDestination = BottomBarScreen.Home.route
     ) {
         composable(route = BottomBarScreen.Home.route) {
-            HomeScreen()
+            HomeScreen(
+                navController = navController,
+                navigateToVocabularyScreen = {
+                    navigateToBottomBarScreen(navController, BottomBarScreen.Vocabulary)
+                }
+            )
         }
         composable(route = BottomBarScreen.Practice.route) {
             PracticeScreen(
@@ -37,6 +43,7 @@ fun MainNavGraph(navController: NavHostController) {
         }
     }
 }
+
 private fun NavGraphBuilder.subNavGraph(navController: NavController) {
     navigation(
         route = Graph.SUB,
