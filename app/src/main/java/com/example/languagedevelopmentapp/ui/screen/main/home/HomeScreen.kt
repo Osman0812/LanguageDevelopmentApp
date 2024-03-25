@@ -43,16 +43,12 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.example.languagedevelopmentapp.R
-import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeScreenViewModel = hiltViewModel(),
-    navController: NavHostController,
-    navigateToVocabularyScreen: (String) -> Unit,
+    viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val wordState by viewModel.wordState.collectAsState()
     Column(
@@ -76,9 +72,7 @@ fun HomeScreen(
             onOtherUsagesEnglish = viewModel::otherUsagesEnglish,
             onClearState = viewModel::clearState,
             onWordExample = viewModel::wordExamples,
-            navigateToVocabularyScreen = navigateToVocabularyScreen,
-            transformToJsonString = viewModel::transformPlaceDetailToJsonString,
-            navController = navController
+            onSaveToFirebase = viewModel::saveToFirebase
         )
     }
 }
@@ -92,16 +86,14 @@ fun HomeScreenBody(
     wordUiState: HomeScreenUiModel,
     onWordExample: (String) -> Unit,
     onClearState: () -> Unit,
-    navigateToVocabularyScreen: (String) -> Unit,
-    transformToJsonString: (HomeScreenUiModel) -> String,
-    navController: NavHostController
+    onSaveToFirebase: (HomeScreenUiModel, List<Pair<String, String>>) -> Unit
 ) {
     var selectedWord by remember {
         mutableStateOf("")
     }
     val text =
-        " My name is Thomas Shelby, i am 37 yers old. Born in Birmingham in 1921."
-    val splittedText = text.split(" ")
+        " My name is Thomas Shelby, i am 37 years old. Born in Birmingham in 1921."
+    val splitText = text.split(" ")
     var isSelected by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
@@ -110,7 +102,7 @@ fun HomeScreenBody(
         modifier = modifier
             .padding(start = 15.dp, top = 5.dp, end = 15.dp)
     ) {
-        splittedText.forEach { text ->
+        splitText.forEach { text ->
             ClickableText(
                 text = AnnotatedString(text = text),
                 onClick = {
@@ -141,9 +133,7 @@ fun HomeScreenBody(
                     .padding(start = 15.dp, end = 15.dp),
                 word = selectedWord,
                 wordUiState = wordUiState,
-                navigateTo = navigateToVocabularyScreen,
-                transformToJsonString = transformToJsonString,
-                navController = navController
+                onSaveToFirebase = onSaveToFirebase
             )
         }
         LaunchedEffect(key1 = Unit) {
@@ -159,10 +149,9 @@ fun FooterBody(
     modifier: Modifier = Modifier,
     word: String,
     wordUiState: HomeScreenUiModel,
-    navigateTo: (String) -> Unit,
-    transformToJsonString: (HomeScreenUiModel) -> String,
-    navController: NavHostController
+    onSaveToFirebase: (HomeScreenUiModel, List<Pair<String, String>>) -> Unit
 ) {
+    val list = wordUiState.otherUsagesEnglish.zip(wordUiState.otherUsagesTurkish)
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -203,8 +192,8 @@ fun FooterBody(
                         .size(ScreenDimensions.screenWidth * 0.1f)
                         .clickable(
                             onClick = {
-                                val jsonString = transformToJsonString(wordUiState)
-                                navigateTo(BottomBarScreen.Vocabulary.route)
+                                onSaveToFirebase(wordUiState, list)
+                                // navigateTo(BottomBarScreen.Vocabulary.route)
                             }
                         ),
                     painter = painterResource(id = R.drawable.ic_save_icon),
@@ -224,7 +213,7 @@ fun FooterBody(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            val list = wordUiState.otherUsagesEnglish.zip(wordUiState.otherUsagesTurkish)
+
             Column {
                 if (wordUiState.otherUsagesTurkish.isEmpty() || wordUiState.otherUsagesEnglish.isEmpty()) {
                     CircularProgressIndicator(
@@ -257,7 +246,6 @@ fun FooterBody(
                 thickness = 1.dp
             )
         }
-
         item {
             Text(
                 text = wordUiState.wordExampleText,

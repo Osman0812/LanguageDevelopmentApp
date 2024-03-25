@@ -1,12 +1,16 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.BuildConfig
-import com.example.languagedevelopmentapp.util.DataTransformer
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
+import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.firestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +19,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeScreenViewModel @Inject constructor() : ViewModel() {
+class HomeScreenViewModel @Inject constructor(
+    private val application: Application
+) : AndroidViewModel(application) {
 
     private var _wordState = MutableStateFlow(HomeScreenUiModel())
     var wordState = _wordState.asStateFlow()
@@ -54,9 +60,70 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             val response = generativeModel.generateContent(prompt)
             val words = response.text
             val wordList = extractWordsTurkish(words ?: "")
-            Log.d("turkish", words.toString())
             _wordState.value = _wordState.value.copy(otherUsagesTurkish = wordList)
         }
+    }
+
+    fun saveToFirebase(wordState: HomeScreenUiModel, zipList: List<Pair<String, String>>) {
+        _wordState.value = _wordState.value.copy(wordZip = zipList)
+        val map = hashMapOf<String, Any>()
+        map["word"] = wordState.word
+        map["translate"] = wordState.translate
+        map["synonyms"] = zipList
+        map["date"] = Timestamp.now()
+        val firestore = Firebase.firestore
+        val reference = firestore.collection("Words").document(wordState.word)
+        reference.get()
+            .addOnSuccessListener { docSnap ->
+                if (docSnap.exists()) {
+                    reference.addSnapshotListener { value, _ ->
+                        if (value != null && value.exists()) {
+                            Toast.makeText(
+                                application.applicationContext,
+                                "You already saved \"${wordState.word}\"",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                application.applicationContext,
+                                "Updated \"${wordState.word}\"",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            reference.set(map)
+                                .addOnSuccessListener {
+                                    Toast.makeText(
+                                        application.applicationContext,
+                                        "${wordState.word} saved!",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(
+                                        application.applicationContext,
+                                        it.message,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                        }
+                    }
+                } else {
+                    reference.set(map)
+                        .addOnSuccessListener {
+                            Toast.makeText(
+                                application.applicationContext,
+                                "\"${wordState.word}\" saved!",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(
+                                application.applicationContext,
+                                it.message,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                }
+            }
     }
 
     fun wordExamples(word: String) {
@@ -76,17 +143,12 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         val words = text.split("\\s".toRegex())
         return words.filter { it.matches(Regex("[a-zA-ZçğıöşüÇĞİÖŞÜ]+")) }
     }
+
     fun clearState() {
         _wordState.value = _wordState.value.copy(
             translate = "",
             otherUsagesEnglish = emptyList(),
             otherUsagesTurkish = emptyList()
         )
-    }
-
-    fun transformPlaceDetailToJsonString(
-        homeDetail: HomeScreenUiModel
-    ): String {
-        return DataTransformer.transformToJsonString(homeDetail)
     }
 }
