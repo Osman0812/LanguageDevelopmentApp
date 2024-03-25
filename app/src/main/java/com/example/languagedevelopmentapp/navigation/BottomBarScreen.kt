@@ -8,7 +8,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
 
 open class BottomBarScreen(
-    val route: String,
+    val route: String ,
     val icon: ImageVector,
     val title: String
 ) {

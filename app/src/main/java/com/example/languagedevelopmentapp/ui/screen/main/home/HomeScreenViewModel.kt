@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.BuildConfig
+import com.example.languagedevelopmentapp.util.DataTransformer
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +30,7 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             val response = generativeModel.generateContent(content {
                 text(prompt)
             })
-            _wordState.value = _wordState.value.copy(translate = response.text ?: "")
+            _wordState.value = _wordState.value.copy(word = word, translate = response.text ?: "")
         }
     }
 
@@ -81,5 +82,11 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             otherUsagesEnglish = emptyList(),
             otherUsagesTurkish = emptyList()
         )
+    }
+
+    fun transformPlaceDetailToJsonString(
+        homeDetail: HomeScreenUiModel
+    ): String {
+        return DataTransformer.transformToJsonString(homeDetail)
     }
 }

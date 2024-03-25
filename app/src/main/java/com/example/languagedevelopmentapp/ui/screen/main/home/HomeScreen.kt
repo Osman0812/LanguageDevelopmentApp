@@ -1,6 +1,7 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -32,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -39,12 +43,16 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.example.languagedevelopmentapp.R
+import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeScreenViewModel = hiltViewModel()
+    viewModel: HomeScreenViewModel = hiltViewModel(),
+    navController: NavHostController,
+    navigateToVocabularyScreen: (String) -> Unit,
 ) {
     val wordState by viewModel.wordState.collectAsState()
     Column(
@@ -67,7 +75,10 @@ fun HomeScreen(
             wordUiState = wordState,
             onOtherUsagesEnglish = viewModel::otherUsagesEnglish,
             onClearState = viewModel::clearState,
-            onWordExample = viewModel::wordExamples
+            onWordExample = viewModel::wordExamples,
+            navigateToVocabularyScreen = navigateToVocabularyScreen,
+            transformToJsonString = viewModel::transformPlaceDetailToJsonString,
+            navController = navController
         )
     }
 }
@@ -80,7 +91,10 @@ fun HomeScreenBody(
     onOtherUsagesEnglish: (String) -> Unit,
     wordUiState: HomeScreenUiModel,
     onWordExample: (String) -> Unit,
-    onClearState: () -> Unit
+    onClearState: () -> Unit,
+    navigateToVocabularyScreen: (String) -> Unit,
+    transformToJsonString: (HomeScreenUiModel) -> String,
+    navController: NavHostController
 ) {
     var selectedWord by remember {
         mutableStateOf("")
@@ -126,7 +140,10 @@ fun HomeScreenBody(
                     .height(ScreenDimensions.screenHeight * 0.9f)
                     .padding(start = 15.dp, end = 15.dp),
                 word = selectedWord,
-                wordUiState = wordUiState
+                wordUiState = wordUiState,
+                navigateTo = navigateToVocabularyScreen,
+                transformToJsonString = transformToJsonString,
+                navController = navController
             )
         }
         LaunchedEffect(key1 = Unit) {
@@ -141,7 +158,10 @@ fun HomeScreenBody(
 fun FooterBody(
     modifier: Modifier = Modifier,
     word: String,
-    wordUiState: HomeScreenUiModel
+    wordUiState: HomeScreenUiModel,
+    navigateTo: (String) -> Unit,
+    transformToJsonString: (HomeScreenUiModel) -> String,
+    navController: NavHostController
 ) {
     LazyColumn(
         modifier = modifier,
@@ -163,7 +183,11 @@ fun FooterBody(
                 )
             }
 
-            Row {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 if (wordUiState.translate.isEmpty()) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.background
@@ -173,6 +197,18 @@ fun FooterBody(
                     text = wordUiState.translate,
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    modifier = Modifier
+                        .size(ScreenDimensions.screenWidth * 0.1f)
+                        .clickable(
+                            onClick = {
+                                val jsonString = transformToJsonString(wordUiState)
+                                navigateTo(BottomBarScreen.Vocabulary.route)
+                            }
+                        ),
+                    painter = painterResource(id = R.drawable.ic_save_icon),
+                    contentDescription = "Save Icon"
                 )
             }
             Divider(
