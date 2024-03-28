@@ -23,7 +23,8 @@ fun CustomButton(
     text: String,
     containerColor: Color = MaterialTheme.colorScheme.primary,
     borderColor: Color = Color.Transparent,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    isEnabled: Boolean = true
 ){
     Button(
         modifier = modifier,
@@ -32,6 +33,7 @@ fun CustomButton(
             width = 1.dp,
             color = borderColor
         ),
+        enabled = isEnabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor
         ),
