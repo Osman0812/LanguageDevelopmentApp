@@ -11,7 +11,8 @@ import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.PracticeScreen
-import com.example.languagedevelopmentapp.ui.screen.main.practice.PrePracticeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.practice.readingscreen.ReadingScreen
 import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileScreen
 import com.example.languagedevelopmentapp.ui.screen.main.vocabulary.VocabularyScreen
 
@@ -26,13 +27,20 @@ fun MainNavGraph(navController: NavHostController) {
             HomeScreen()
         }
         composable(route = BottomBarScreen.Practice.route) {
-            PrePracticeScreen()
+            PrePracticeScreen(
+                navigateTo = {
+                    navController.navigate(Screens.ReadingScreen.route)
+                }
+            )
         }
         composable(route = BottomBarScreen.Vocabulary.route) {
             VocabularyScreen()
         }
         composable(route = BottomBarScreen.Profile.route) {
             ProfileScreen()
+        }
+        composable(route = Screens.ReadingScreen.route) {
+            ReadingScreen()
         }
     }
 }

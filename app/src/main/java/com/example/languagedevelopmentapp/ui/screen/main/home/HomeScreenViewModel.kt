@@ -148,7 +148,8 @@ class HomeScreenViewModel @Inject constructor(
         _wordState.value = _wordState.value.copy(
             translate = "",
             otherUsagesEnglish = emptyList(),
-            otherUsagesTurkish = emptyList()
+            otherUsagesTurkish = emptyList(),
+            wordExampleText = ""
         )
     }
 }

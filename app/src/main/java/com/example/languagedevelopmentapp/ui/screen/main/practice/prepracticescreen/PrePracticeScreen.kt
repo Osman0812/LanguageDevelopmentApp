@@ -1,4 +1,4 @@
-package com.example.languagedevelopmentapp.ui.screen.main.practice
+package com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,14 +36,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
+import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.component.CustomButton
 import com.example.languagedevelopmentapp.ui.component.CustomLevelField
 import com.example.languagedevelopmentapp.ui.component.CustomProfileIcon
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
-fun PrePracticeScreen() {
+fun PrePracticeScreen(
+    viewModel: PrePracticeScreenViewModel = hiltViewModel(),
+    navigateTo: (String) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -59,6 +64,7 @@ fun PrePracticeScreen() {
                     color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(15.dp)
                 ),
+            navigateTo = navigateTo
         )
         PrePracticeTop(
             modifier = Modifier
@@ -70,8 +76,9 @@ fun PrePracticeScreen() {
 
 @Composable
 fun PrePracticeTop(
-    modifier: Modifier = Modifier
-) {
+    modifier: Modifier = Modifier,
+
+    ) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -90,11 +97,20 @@ fun PrePracticeTop(
 
 @Composable
 fun PrePracticeScreenBody(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navigateTo: (String) -> Unit
 ) {
     var isReadingSelected by remember { mutableStateOf(false) }
     var isQuizSelected by remember { mutableStateOf(false) }
     var isShowDialog by remember { mutableStateOf(false) }
+    val levelList = listOf(
+        "Beginner",
+        "Elementary",
+        "Pre-Intermediate",
+        "Intermediate",
+        "Upper-Intermediate",
+        "Advanced"
+    )
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -116,6 +132,7 @@ fun PrePracticeScreenBody(
                 onItemClick = {
                     isReadingSelected = !isReadingSelected
                     isQuizSelected = false
+                    isShowDialog = false
                 },
                 isOtherItemClicked = isQuizSelected
             )
@@ -125,6 +142,7 @@ fun PrePracticeScreenBody(
                 onItemClick = {
                     isQuizSelected = !isQuizSelected
                     isReadingSelected = false
+                    isShowDialog = false
                 },
                 isOtherItemClicked = isReadingSelected
             )
@@ -132,11 +150,14 @@ fun PrePracticeScreenBody(
         CustomButton(
             modifier = Modifier
                 .width(ScreenDimensions.screenWidth * 0.3f),
-            onClick = { isShowDialog = true },
+            onClick = {
+                isShowDialog = !isShowDialog
+                navigateTo(Screens.ReadingScreen.route)
+            },
             text = stringResource(id = R.string.start_text),
             isEnabled = true.takeIf { isReadingSelected || isQuizSelected } ?: false
         )
-        if (isShowDialog) {
+        if (isShowDialog && isQuizSelected) {
             Dialog(
                 modifier = Modifier
                     .height(ScreenDimensions.screenHeight * 0.6f)
@@ -151,7 +172,9 @@ fun PrePracticeScreenBody(
                         shape = RoundedCornerShape(15.dp)
                     )
                     .padding(10.dp),
-                onChangeIsShowDialog = { isShowDialog = it }
+                onChangeIsShowDialog = { isShowDialog = it },
+                levelList = levelList,
+                isQuizSelected = isQuizSelected
             )
         }
     }
@@ -161,16 +184,10 @@ fun PrePracticeScreenBody(
 @Composable
 fun Dialog(
     modifier: Modifier = Modifier,
-    onChangeIsShowDialog: (Boolean) -> Unit
+    onChangeIsShowDialog: (Boolean) -> Unit,
+    levelList: List<String> = emptyList(),
+    isQuizSelected: Boolean
 ) {
-    val levelList = listOf(
-        "Beginner",
-        "Elementary",
-        "Pre-Intermediate",
-        "Intermediate",
-        "Upper-Intermediate",
-        "Advanced"
-    )
     var selectedLevel: String by remember { mutableStateOf("") }
     AlertDialog(
         modifier = modifier,
@@ -197,27 +214,31 @@ fun Dialog(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
-                Divider(modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
-                    thickness = 1.dp)
-                CustomLevelField(
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .background(
-                            color = if (selectedLevel == "test") Color.Green else Color.White,
-                            shape = RoundedCornerShape(5.dp)
-                        )
-                        .border(
-                            color = if (selectedLevel == "test") Color.Black else Color.Green,
-                            shape = RoundedCornerShape(5.dp),
-                            width = 1.5.dp
-                        ),
-                    text = stringResource(id = R.string.level_determination_text),
-                    onClick = {
-                        selectedLevel = "test"
-                    },
-                    isLevelSelected = selectedLevel == "test",
-                )
+                if (isQuizSelected) {
+                    Divider(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White,
+                        thickness = 1.dp
+                    )
+                    CustomLevelField(
+                        modifier = Modifier
+                            .padding(top = 10.dp)
+                            .background(
+                                color = if (selectedLevel == "test") Color.Green else Color.White,
+                                shape = RoundedCornerShape(5.dp)
+                            )
+                            .border(
+                                color = if (selectedLevel == "test") Color.Black else Color.Green,
+                                shape = RoundedCornerShape(5.dp),
+                                width = 1.5.dp
+                            ),
+                        text = stringResource(id = R.string.level_determination_text),
+                        onClick = {
+                            selectedLevel = "test"
+                        },
+                        isLevelSelected = selectedLevel == "test",
+                    )
+                }
             }
             Row(
                 modifier = Modifier
