@@ -10,6 +10,12 @@ import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescr
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.common.model.RemoteModelManager
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.TranslateRemoteModel
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.TranslatorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +37,9 @@ class ReadingScreenViewModel @Inject constructor(
     private val _selectedWord = MutableStateFlow("")
     val selectedWord: StateFlow<String> = _selectedWord
 
+    val modelManager = RemoteModelManager.getInstance()
+    val wordList = mutableListOf<String>()
+
     init {
         getWords()
     }
@@ -44,8 +53,10 @@ class ReadingScreenViewModel @Inject constructor(
                 .addOnSuccessListener { documents ->
                     for (document in documents) {
                         val word = document.id
+                        wordList.add(word)
                         wordStringBuilder.append("$word, ")
                     }
+                    _words.value = _words.value.copy(readingTextWordsList = wordList)
                     val wordString = wordStringBuilder.toString().trimEnd { it == ',' }
                     _words.value = _words.value.copy(readingTextWords = wordString)
                     readingExercise(wordString)
@@ -60,7 +71,7 @@ class ReadingScreenViewModel @Inject constructor(
 
     private fun readingExercise(words: String) {
         viewModelScope.launch {
-            val prompt = "Write a title and its story for me to clearly get meanings of $words"
+            val prompt = "Write a long story, use $words"
             val response = generativeModel.generateContent(prompt)
             _words.value = _words.value.copy(readingText = response.text.toString())
         }
@@ -77,5 +88,28 @@ class ReadingScreenViewModel @Inject constructor(
             }
         }
         _selectedWord.value = annotatedString.toString()
+    }
+
+    fun translateModel(word: String = "") {
+        val options = TranslatorOptions.Builder()
+            .setSourceLanguage(TranslateLanguage.ENGLISH)
+            .setTargetLanguage(TranslateLanguage.TURKISH)
+            .build()
+        val englishTurkishTranslator = Translation.getClient(options)
+
+        val turkishModel = TranslateRemoteModel.Builder(TranslateLanguage.TURKISH).build()
+        val conditions = DownloadConditions.Builder()
+            .requireWifi()
+            .build()
+        modelManager.download(turkishModel, conditions)
+            .addOnSuccessListener {
+                if (word.isNotEmpty()) {
+                    englishTurkishTranslator.translate(word)
+                        .addOnSuccessListener {
+
+                        }
+                }
+
+            }
     }
 }

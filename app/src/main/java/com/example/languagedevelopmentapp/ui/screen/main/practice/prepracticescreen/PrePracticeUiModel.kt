@@ -2,5 +2,6 @@ package com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticesc
 
 data class PrePracticeUiModel(
     val readingTextWords: String = "",
+    val readingTextWordsList: List<String> = emptyList(),
     val readingText: String = ""
 )
