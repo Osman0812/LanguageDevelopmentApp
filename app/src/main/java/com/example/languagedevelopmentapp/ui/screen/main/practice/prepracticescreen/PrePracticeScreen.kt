@@ -152,8 +152,10 @@ fun PrePracticeScreenBody(
                 .width(ScreenDimensions.screenWidth * 0.3f),
             onClick = {
                 isShowDialog = !isShowDialog
-                navigateTo(Screens.ReadingScreen.route)
-            },
+                if(isReadingSelected){
+                    navigateTo(Screens.ReadingScreen.route)
+                }
+                      },
             text = stringResource(id = R.string.start_text),
             isEnabled = true.takeIf { isReadingSelected || isQuizSelected } ?: false
         )
@@ -174,7 +176,8 @@ fun PrePracticeScreenBody(
                     .padding(10.dp),
                 onChangeIsShowDialog = { isShowDialog = it },
                 levelList = levelList,
-                isQuizSelected = isQuizSelected
+                isQuizSelected = isQuizSelected,
+                navigateTo = navigateTo
             )
         }
     }
@@ -186,7 +189,8 @@ fun Dialog(
     modifier: Modifier = Modifier,
     onChangeIsShowDialog: (Boolean) -> Unit,
     levelList: List<String> = emptyList(),
-    isQuizSelected: Boolean
+    isQuizSelected: Boolean,
+    navigateTo: (String) -> Unit
 ) {
     var selectedLevel: String by remember { mutableStateOf("") }
     AlertDialog(
@@ -248,7 +252,12 @@ fun Dialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CustomButton(
-                    onClick = { },
+                    onClick = {
+                              if (selectedLevel == "test"){
+                                  onChangeIsShowDialog(false)
+                                  navigateTo(Screens.PracticeScreen.route)
+                              }
+                    },
                     text = stringResource(id = R.string.start_text),
                     isEnabled = selectedLevel.isNotEmpty()
                 )

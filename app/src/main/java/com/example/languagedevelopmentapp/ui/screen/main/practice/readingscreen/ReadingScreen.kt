@@ -27,7 +27,6 @@ fun ReadingScreen(
     viewModel: ReadingScreenViewModel = hiltViewModel()
 ) {
     val words = viewModel.words.collectAsState().value
-    val word = viewModel.selectedWord.collectAsState().value
     if (words.readingText.isNotEmpty()) {
         LazyColumn {
             item {
