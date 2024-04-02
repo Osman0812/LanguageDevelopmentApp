@@ -1,4 +1,4 @@
-package com.example.languagedevelopmentapp.ui.screen.main.practice
+package com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -21,11 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.ui.component.CustomButton
 import com.example.languagedevelopmentapp.ui.component.CustomTestField
@@ -33,14 +35,20 @@ import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
 fun PracticeScreen(
-    navigateToBack: () -> Unit
+    navigateToBack: () -> Unit,
+    viewModel: PracticeScreenViewModel = hiltViewModel()
 ) {
+    val remainingTime = viewModel.remainingTime.collectAsState(initial = 60).value
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
 
     ) {
-        TopScreen(navigateToBack)
+        TopScreen(
+            navigateToBack,
+            remainingTime = remainingTime
+        )
         BodyScreen(
             modifier = Modifier
                 .fillMaxSize()
@@ -53,6 +61,7 @@ fun PracticeScreen(
 @Composable
 fun TopScreen(
     navigateToBack: () -> Unit,
+    remainingTime: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -90,7 +99,7 @@ fun TopScreen(
                     painter = painterResource(id = R.drawable.ic_timer),
                     contentDescription = "Timer"
                 )
-                Text(text = "2:00")
+                Text(text = remainingTime.toString())
             }
         }
         Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary)

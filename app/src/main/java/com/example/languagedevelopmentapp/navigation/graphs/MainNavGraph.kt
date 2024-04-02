@@ -10,7 +10,7 @@ import androidx.navigation.navigation
 import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreen
-import com.example.languagedevelopmentapp.ui.screen.main.practice.PracticeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.readingscreen.ReadingScreen
 import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileScreen
