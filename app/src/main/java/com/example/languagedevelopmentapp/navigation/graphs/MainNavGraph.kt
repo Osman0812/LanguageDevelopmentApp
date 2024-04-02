@@ -23,13 +23,23 @@ fun MainNavGraph(navController: NavHostController) {
         route = Graph.MAIN,
         startDestination = BottomBarScreen.Home.route
     ) {
+        val navigateToBack = {
+            val backStackEntry = navController.previousBackStackEntry
+            if (backStackEntry != null) {
+                navController.popBackStack()
+            }
+        }
         composable(route = BottomBarScreen.Home.route) {
             HomeScreen()
         }
         composable(route = BottomBarScreen.Practice.route) {
             PrePracticeScreen(
                 navigateTo = {
-                    navController.navigate(Screens.ReadingScreen.route)
+                    if (it == "READING_SCREEN"){
+                        navController.navigate(Screens.ReadingScreen.route)
+                    }else {
+                        navController.navigate(Screens.PracticeScreen.route)
+                    }
                 }
             )
         }
@@ -41,6 +51,11 @@ fun MainNavGraph(navController: NavHostController) {
         }
         composable(route = Screens.ReadingScreen.route) {
             ReadingScreen()
+        }
+        composable(route = Screens.PracticeScreen.route) {
+            PracticeScreen(
+                navigateToBack = navigateToBack
+            )
         }
     }
 }
