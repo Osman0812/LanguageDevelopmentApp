@@ -1,5 +1,6 @@
 package com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ fun PracticeScreen(
     viewModel: PracticeScreenViewModel = hiltViewModel()
 ) {
     val remainingTime = viewModel.remainingTime.collectAsState(initial = 60).value
+    val questionList = viewModel.questionList.collectAsState()
 
     Column(
         modifier = Modifier
@@ -52,7 +54,8 @@ fun PracticeScreen(
         BodyScreen(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 30.dp, end = 30.dp)
+                .padding(start = 30.dp, end = 30.dp),
+            questionList = questionList.value.questionList
         )
     }
 }
@@ -106,8 +109,12 @@ fun TopScreen(
     }
 }
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
-fun BodyScreen(modifier: Modifier = Modifier) {
+fun BodyScreen(
+    modifier: Modifier = Modifier,
+    questionList: List<Question>
+) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -123,7 +130,8 @@ fun BodyScreen(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(ScreenDimensions.screenHeight * 0.25f)
         ) {
-            Text(text = "Question part here...")
+            if (questionList.isNotEmpty())
+            Text(text = questionList.first().questionText)
         }
         Column(
             modifier = Modifier
