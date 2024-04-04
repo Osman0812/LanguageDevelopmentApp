@@ -48,46 +48,44 @@ class PracticeScreenViewModel @Inject constructor(
             }
         }
     }
-
-    fun parseQuestions(responseText: String) {
+    private fun getQuestions() {
+        viewModelScope.launch {
+            val prompt =
+                "Write a english level determination quiz, 21 questions,only questions and 4 options per each."
+            val response = generativeModel.generateContent(prompt)
+            Log.d("questions", response.text.toString())
+            parseQuestions(response.text ?: "")
+        }
+    }
+    private fun parseQuestions(responseText: String) {
+        _questionList.value = _questionList.value.copy(isLoading = true)
         viewModelScope.launch {
             val questions = mutableListOf<Question>()
-
             val lines = responseText.lines()
-
             var questionNumber = ""
             var questionText = ""
+            var questionText2 = ""
             val options = mutableListOf<String>()
 
             for (line in lines) {
-                if (line.startsWith(Regex("\\d+\\.").pattern) || line.contains("?")) {
+                if (line.contains(Regex("\\d+\\.").pattern) || line.contains("?")) {
+                    questions.add(Question(questionNumber, questionText,questionText2, options.toList()))
                     questionNumber = line.substringBefore(".").trim()
                     questionText = line.substringAfter(".").trim()
-                    questions.add(Question(questionNumber, questionText, options.toList()))
                     options.clear()
                 } else if( line.contains("(") || line.contains("-")) {
                     options.add(line.trim())
+                } else if (line.isBlank()) {
+                    questionText2 = line.substringBefore(".").trim()
                 }
             }
-            _questionList.value = _questionList.value.copy(questionList = questions)
+            _questionList.value = _questionList.value.copy(questionList = questions, isLoading = false)
             questions.forEachIndexed { index, question ->
                 println("Question ${question.questionNumber}: ${question.questionText}")
                 question.answerOptions.forEachIndexed { i, option ->
                     println("  (${('A' + i)}) ${option.substring(3)}")
                 }
             }
-        }
-
-    }
-
-    fun getQuestions() {
-        viewModelScope.launch {
-            val prompt =
-                "Write a level determination english in test format, 20 questions,only questions and 4 options per each."
-            val response = generativeModel.generateContent(prompt)
-            Log.d("questions", response.text.toString())
-
-            val questions = parseQuestions(response.text ?: "")
         }
     }
 }

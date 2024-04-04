@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -22,7 +23,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -115,63 +122,87 @@ fun BodyScreen(
     modifier: Modifier = Modifier,
     questionList: List<Question>
 ) {
+    var questionNo by remember {
+        mutableIntStateOf(0)
+    }
+    var isNextClicked by remember {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(key1 = questionNo) {
+        isNextClicked = false
+    }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Question 1 of 3",
+            text = "Question ${questionNo + 1} of ${questionList.size - 1}",
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.headlineMedium
         )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(ScreenDimensions.screenHeight * 0.25f)
-        ) {
-            if (questionList.isNotEmpty())
-            Text(text = questionList.first().questionText)
-        }
-        Column(
-            modifier = Modifier
-                .width(ScreenDimensions.screenWidth * 0.8f),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            CustomTestField(
-                onClick = { /*TODO*/ },
-                text = "Tabi Efenim",
-                containerColor = Color.Transparent,
-                borderColor = MaterialTheme.colorScheme.outline,
-                textColor = Color.Black
-            )
-            CustomTestField(
-                onClick = { /*TODO*/ },
-                text = "Tabi Efenim",
-                containerColor = Color.Transparent,
-                borderColor = MaterialTheme.colorScheme.outline,
-                textColor = Color.Black
-            )
-            CustomTestField(
-                onClick = { /*TODO*/ },
-                text = "Tabi Efenim",
-                containerColor = Color.Transparent,
-                borderColor = MaterialTheme.colorScheme.outline,
-                textColor = Color.Black
-            )
-            CustomTestField(
-                onClick = { /*TODO*/ },
-                text = "Tabi Efenim",
-                containerColor = Color.Transparent,
-                borderColor = MaterialTheme.colorScheme.outline,
-                textColor = Color.Black
-            )
-        }
+        if (questionList.isNotEmpty() && questionNo < questionList.size){
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ScreenDimensions.screenHeight * 0.25f)
+            ) {
+                if (questionList.isNotEmpty() && questionNo < questionList.size)
+                Column {
+                    Text(text = questionList[questionNo].questionText)
+                    if (questionList[questionNo].questionText2.isNotEmpty()){
+                        Text(text = questionList[questionNo].questionText2)
+                    }
+                }
 
+            }
+            Column(
+                modifier = Modifier
+                    .width(ScreenDimensions.screenWidth * 0.8f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                if (questionList.isNotEmpty() && questionNo < questionList.size && questionList[questionNo].answerOptions.isNotEmpty()){
+                    CustomTestField(
+                        onClick = { /*TODO*/ },
+                        text = questionList[questionNo +1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[0].isNotEmpty() } ?: "",
+                        containerColor = Color.Transparent,
+                        borderColor = MaterialTheme.colorScheme.outline,
+                        textColor = Color.Black
+                    )
+                    CustomTestField(
+                        onClick = { /*TODO*/ },
+                        text = questionList[questionNo +1].answerOptions[1].takeIf { questionList[questionNo].answerOptions[1].isNotEmpty() } ?: "",
+                        containerColor = Color.Transparent,
+                        borderColor = MaterialTheme.colorScheme.outline,
+                        textColor = Color.Black
+                    )
+                    CustomTestField(
+                        onClick = { /*TODO*/ },
+                        text = questionList[questionNo +1].answerOptions[2].takeIf { questionList[questionNo].answerOptions[2].isNotEmpty() } ?: "",
+                        containerColor = Color.Transparent,
+                        borderColor = MaterialTheme.colorScheme.outline,
+                        textColor = Color.Black
+                    )
+                    CustomTestField(
+                        onClick = { /*TODO*/ },
+                        text = questionList[questionNo +1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[3].isNotEmpty() } ?: "",
+                        containerColor = Color.Transparent,
+                        borderColor = MaterialTheme.colorScheme.outline,
+                        textColor = Color.Black
+                    )
+                }
+            }
+        }else {
+            CircularProgressIndicator()
+        }
         CustomButton(
             modifier = Modifier
                 .width(ScreenDimensions.screenWidth * 0.8f),
-            onClick = { /*TODO*/ },
+            onClick = {
+                if (questionNo < questionList.size - 1) {
+                questionNo += 1
+                isNextClicked = true
+            } },
             text = "Next ->"
         )
     }
