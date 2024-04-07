@@ -1,22 +1,21 @@
 package com.example.languagedevelopmentapp.ui.screen.main.home
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
@@ -25,6 +24,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,12 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.LineBreak
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.getSelectedText
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
@@ -77,7 +77,8 @@ fun HomeScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun HomeScreenBody(
     modifier: Modifier = Modifier,
@@ -91,13 +92,82 @@ fun HomeScreenBody(
     var selectedWord by remember {
         mutableStateOf("")
     }
+    var isSelected by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
     val text =
-        " My name is Thomas Shelby, i am 37 years old. Born in Birmingham in 1921."
+        " In his recent book, Return of the Bison: A Story of Survival, Restoration, and a Wilder World, Roger Di Silvestro describes how bison are being repopulated through conservation on federal public lands at national parks and national wildlife refuges, focusing on Yellowstone National Park throughout the book. He implements a narrative that tracks singular people in history that contributed to the establishment of Yellowstone National Park as a wildlife refuge for bison. In particular, he describes the events that precipitated the era of “Big Conservation” at the turn of the 20th century with executive orders by President Theodore Roosevelt and the various Congressional Acts that protected wildlife."
+    val selectedText = remember {
+        mutableStateOf("")
+    }
+    var textInput by remember { mutableStateOf(TextFieldValue(text)) }
+    var selectedText2 by remember {
+        mutableStateOf("")
+    }
+    TextField(
+        modifier = modifier,
+        value = textInput,
+        onValueChange = { newValue ->
+            textInput = newValue
+            textInput.selection
+            selectedText2 = textInput.getSelectedText().text
+        },
+        readOnly = true,
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        interactionSource = remember {
+            MutableInteractionSource()
+        }
+            .also { interactionSource ->
+                LaunchedEffect(key1 = interactionSource) {
+                    interactionSource.interactions.collect {
+                        if (it is PressInteraction.Press) {
+                            Log.d("release", "true")
+                            selectedText.value = selectedText2
+                            Log.d("selected", selectedText2)
+                        }
+                    }
+                }
+            }
+    )
+
+    if (selectedText.value.isNotEmpty()) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                selectedText.value = ""
+            },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            FooterBody(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ScreenDimensions.screenHeight * 0.9f)
+                    .padding(start = 15.dp, end = 15.dp),
+                word = selectedWord,
+                wordUiState = wordUiState,
+                onSaveToFirebase = onSaveToFirebase
+            )
+        }
+        LaunchedEffect(key1 = Unit) {
+            onTranslate(selectedText.value)
+            onOtherUsagesEnglish(selectedText.value)
+            onWordExample(selectedText.value)
+        }
+    }
+    /*
+    val text =
+        " In his recent book, Return of the Bison: A Story of Survival, Restoration, and a Wilder World, Roger Di Silvestro describes how bison are being repopulated through conservation on federal public lands at national parks and national wildlife refuges, focusing on Yellowstone National Park throughout the book. He implements a narrative that tracks singular people in history that contributed to the establishment of Yellowstone National Park as a wildlife refuge for bison. In particular, he describes the events that precipitated the era of “Big Conservation” at the turn of the 20th century with executive orders by President Theodore Roosevelt and the various Congressional Acts that protected wildlife."
     val splitText = text.split(" ")
     var isSelected by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
+
     FlowRow(
         modifier = modifier
             .padding(start = 15.dp, top = 5.dp, end = 15.dp)
@@ -117,6 +187,9 @@ fun HomeScreenBody(
             Spacer(modifier = Modifier.width(5.dp))
         }
     }
+
+
+
     if (isSelected) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -142,6 +215,8 @@ fun HomeScreenBody(
             onWordExample(selectedWord)
         }
     }
+
+     */
 }
 
 @Composable

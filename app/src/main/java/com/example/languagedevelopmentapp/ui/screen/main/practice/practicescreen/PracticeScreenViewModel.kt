@@ -34,14 +34,12 @@ class PracticeScreenViewModel @Inject constructor(
     val list = mutableListOf<String>()
 
     init {
-        val initialTime = savedStateHandle.get<Int>("initialTime") ?: 60
-        _remainingTime.value = initialTime
-        //startCountdown()
         getQuestions()
     }
 
-    private fun startCountdown() {
+     fun startCountdown(time: Int) {
         viewModelScope.launch {
+            _remainingTime.value = time
             while (_remainingTime.value > 0) {
                 delay(1000)
                 _remainingTime.value -= 1
@@ -68,7 +66,7 @@ class PracticeScreenViewModel @Inject constructor(
             val options = mutableListOf<String>()
 
             for (line in lines) {
-                if (line.contains(Regex("\\d+\\.").pattern) || line.contains("?")) {
+                if (line.startsWith("**"+ Regex("\\d+\\.").pattern) || line.contains("?")) {
                     questions.add(Question(questionNumber, questionText,questionText2, options.toList()))
                     questionNumber = line.substringBefore(".").trim()
                     questionText = line.substringAfter(".").trim()
