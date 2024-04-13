@@ -117,7 +117,6 @@ fun TopScreen(
     }
 }
 
-@SuppressLint("SuspiciousIndentation")
 @Composable
 fun BodyScreen(
     modifier: Modifier = Modifier,

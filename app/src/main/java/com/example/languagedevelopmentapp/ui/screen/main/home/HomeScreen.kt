@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
@@ -105,6 +107,7 @@ fun HomeScreenBody(
     var selectedText2 by remember {
         mutableStateOf("")
     }
+
     TextField(
         modifier = modifier,
         value = textInput,
@@ -148,7 +151,7 @@ fun HomeScreenBody(
                     .fillMaxWidth()
                     .height(ScreenDimensions.screenHeight * 0.9f)
                     .padding(start = 15.dp, end = 15.dp),
-                word = selectedWord,
+                word = selectedText.value,
                 wordUiState = wordUiState,
                 onSaveToFirebase = onSaveToFirebase
             )
@@ -226,7 +229,7 @@ fun FooterBody(
     wordUiState: HomeScreenUiModel,
     onSaveToFirebase: (HomeScreenUiModel, List<Pair<String, String>>) -> Unit
 ) {
-    val list = wordUiState.otherUsagesEnglish.zip(wordUiState.otherUsagesTurkish)
+    val list = wordUiState.otherUsagesEnglish?.zip(wordUiState.otherUsagesTurkish)
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -267,7 +270,9 @@ fun FooterBody(
                         .size(ScreenDimensions.screenWidth * 0.1f)
                         .clickable(
                             onClick = {
-                                onSaveToFirebase(wordUiState, list)
+                                if (list != null) {
+                                    onSaveToFirebase(wordUiState, list)
+                                }
                                 // navigateTo(BottomBarScreen.Vocabulary.route)
                             }
                         ),
@@ -290,27 +295,29 @@ fun FooterBody(
             )
 
             Column {
-                if (wordUiState.otherUsagesTurkish.isEmpty() || wordUiState.otherUsagesEnglish.isEmpty()) {
+                if (wordUiState.otherUsagesTurkish.isEmpty() || wordUiState.otherUsagesEnglish?.isEmpty() == true) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.background
                     )
                 }
-                list.forEach {
-                    Row(
+                list?.forEach {
+                    LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = it.first,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        item{
+                            Text(
+                                text = it.first,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
 
-                        Text(
-                            text = "(${it.second})",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                            Text(
+                                text = "(${it.second})",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             }
