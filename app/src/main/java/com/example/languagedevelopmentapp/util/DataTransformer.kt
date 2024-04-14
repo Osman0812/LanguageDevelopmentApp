@@ -6,7 +6,6 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 object DataTransformer {
-
     fun <T> transformToJsonString(data: T): String {
         val jsonString = Gson().toJson(data)
         return URLEncoder.encode(jsonString,"UTF-8")

@@ -1,6 +1,5 @@
 package com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

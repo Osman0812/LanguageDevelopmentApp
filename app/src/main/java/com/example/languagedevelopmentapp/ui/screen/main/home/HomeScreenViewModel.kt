@@ -11,7 +11,6 @@ import com.google.ai.client.generativeai.type.content
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
-import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,28 +29,27 @@ class HomeScreenViewModel @Inject constructor(
         modelName = "gemini-pro",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
-/*
-    fun translate(word: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val prompt = "$word anlam ını ve $word dilindeki kelimenin esAnlam larını gsonstring olarak döndür."
-            val response = generativeModel.generateContent(content {
-                text(prompt)
-            })
-            Log.d("json", response.text.toString())
-            val data = response.text?.trim()?.removePrefix("```json")?.removeSuffix("```")
-            Log.d("data", data.toString())
-            val gson = Gson()
-            val jsonData = gson.fromJson(data, Map::class.java)
+    /*
+        fun translate(word: String) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val prompt = "$word anlam ını ve $word dilindeki kelimenin esAnlam larını gsonstring olarak döndür."
+                val response = generativeModel.generateContent(content {
+                    text(prompt)
+                })
+                Log.d("json", response.text.toString())
+                val data = response.text?.trim()?.removePrefix("```json")?.removeSuffix("```")
+                Log.d("data", data.toString())
+                val gson = Gson()
+                val jsonData = gson.fromJson(data, Map::class.java)
 
-            _wordState.value = _wordState.value.copy(
-                word = jsonData["kelime"].toString(),
-                translate = jsonData["anlam"].toString()
-            )
+                _wordState.value = _wordState.value.copy(
+                    word = jsonData["kelime"].toString(),
+                    translate = jsonData["anlam"].toString()
+                )
+            }
         }
-    }
 
- */
-
+     */
 
 
     fun translate(word: String) {
@@ -158,17 +156,18 @@ class HomeScreenViewModel @Inject constructor(
             _wordState.value = _wordState.value.copy(wordExampleText = response.text.toString())
         }
     }
+
     private fun extractWords(text: String): List<String> {
         return text.lines().filter { it.isNotBlank() }
     }
 
-/*
-    private fun extractWords(text: String): List<String> {
-        val words = text.split("\\s".toRegex())
-        return words.filter { it.matches(Regex("[a-zA-Z]+")) }
-    }
+    /*
+        private fun extractWords(text: String): List<String> {
+            val words = text.split("\\s".toRegex())
+            return words.filter { it.matches(Regex("[a-zA-Z]+")) }
+        }
 
- */
+     */
 
     private fun extractWordsTurkish(text: String): List<String> {
         val words = text.split("\\s".toRegex())

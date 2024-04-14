@@ -9,19 +9,21 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -129,6 +131,7 @@ fun HomeScreenBody(
                     interactionSource.interactions.collect {
                         if (it is PressInteraction.Press) {
                             Log.d("release", "true")
+                            onClearState()
                             selectedText.value = selectedText2
                             Log.d("selected", selectedText2)
                         }
@@ -162,64 +165,6 @@ fun HomeScreenBody(
             onWordExample(selectedText.value)
         }
     }
-    /*
-    val text =
-        " In his recent book, Return of the Bison: A Story of Survival, Restoration, and a Wilder World, Roger Di Silvestro describes how bison are being repopulated through conservation on federal public lands at national parks and national wildlife refuges, focusing on Yellowstone National Park throughout the book. He implements a narrative that tracks singular people in history that contributed to the establishment of Yellowstone National Park as a wildlife refuge for bison. In particular, he describes the events that precipitated the era of “Big Conservation” at the turn of the 20th century with executive orders by President Theodore Roosevelt and the various Congressional Acts that protected wildlife."
-    val splitText = text.split(" ")
-    var isSelected by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
-
-    FlowRow(
-        modifier = modifier
-            .padding(start = 15.dp, top = 5.dp, end = 15.dp)
-    ) {
-        splitText.forEach { text ->
-            ClickableText(
-                text = AnnotatedString(text = text),
-                onClick = {
-                    onClearState()
-                    selectedWord = text
-                    isSelected = true
-                },
-                softWrap = true,
-                overflow = TextOverflow.Visible,
-                style = TextStyle(lineBreak = LineBreak.Paragraph)
-            )
-            Spacer(modifier = Modifier.width(5.dp))
-        }
-    }
-
-
-
-    if (isSelected) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                isSelected = false
-            },
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.background,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
-        ) {
-            FooterBody(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ScreenDimensions.screenHeight * 0.9f)
-                    .padding(start = 15.dp, end = 15.dp),
-                word = selectedWord,
-                wordUiState = wordUiState,
-                onSaveToFirebase = onSaveToFirebase
-            )
-        }
-        LaunchedEffect(key1 = Unit) {
-            onTranslate(selectedWord)
-            onOtherUsagesEnglish(selectedWord)
-            onWordExample(selectedWord)
-        }
-    }
-
-     */
 }
 
 @Composable
@@ -273,18 +218,17 @@ fun FooterBody(
                                 if (list != null) {
                                     onSaveToFirebase(wordUiState, list)
                                 }
-                                // navigateTo(BottomBarScreen.Vocabulary.route)
                             }
                         ),
                     painter = painterResource(id = R.drawable.ic_save_icon),
                     contentDescription = "Save Icon"
                 )
             }
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .padding(top = 10.dp),
-                color = MaterialTheme.colorScheme.background,
-                thickness = 1.dp
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.background
             )
         }
         item {
@@ -302,18 +246,19 @@ fun FooterBody(
                 }
                 list?.forEach {
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        item{
+                        item {
                             Text(
                                 text = it.first,
                                 style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colorScheme.primary
                             )
-
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "(${it.second})",
+                                text = "(${it.second.filter { 
+                                    it.isLetter() || it == ' '
+                                }})",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -321,11 +266,11 @@ fun FooterBody(
                     }
                 }
             }
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .padding(top = 10.dp),
-                color = MaterialTheme.colorScheme.background,
-                thickness = 1.dp
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.background
             )
         }
         item {
