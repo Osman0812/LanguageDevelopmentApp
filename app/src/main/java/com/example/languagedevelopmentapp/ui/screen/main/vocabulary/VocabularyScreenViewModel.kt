@@ -26,22 +26,31 @@ class VocabularyScreenViewModel @Inject constructor(
         getWords()
     }
 
-    private fun getWords() {
+    fun getWords() {
         viewModelScope.launch {
-            reference.get().addOnSuccessListener {
-                val documents = it.documents
+            reference.get().addOnSuccessListener { snapshot ->
+                val documents = snapshot.documents
                 val updatedList = mutableListOf<Pair<String, String>>()
+                val updatedSynonyms = mutableListOf<List<HashMap<String, String>>>()
                 documents.forEach { documentSnapshot ->
-                    val translate = documentSnapshot.data?.get("translate")
+                    val translate = documentSnapshot.getString("translate")
                     val word = documentSnapshot.id
-                    val pair = Pair(word, translate.toString())
+                    val pair = Pair(word, translate ?: "")
                     updatedList.add(pair)
+                    val synonyms = documentSnapshot.get("synonyms") as? List<HashMap<String, *>>?
+                    synonyms?.let {
+                        val synonymMap = mutableListOf<HashMap<String, String>>()
+                        it.forEach { synonym ->
+                            synonymMap.add(synonym as HashMap<String, String>)
+                        }
+                        updatedSynonyms.add(synonymMap) // Add HashMap to the list
+                    }
                 }
-                _wordListState.value = _wordListState.value.copy(wordList = updatedList)
+                _wordListState.value =
+                    _wordListState.value.copy(wordList = updatedList, synonyms = updatedSynonyms)
+            }.addOnFailureListener { exception ->
+                Log.d("fail", exception.message.toString())
             }
-                .addOnFailureListener {
-                    Log.d("fail", it.message.toString())
-                }
         }
     }
 }

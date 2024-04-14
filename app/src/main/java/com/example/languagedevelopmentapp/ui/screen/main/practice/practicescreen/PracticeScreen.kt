@@ -1,6 +1,5 @@
 package com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,7 +61,8 @@ fun PracticeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = 30.dp, end = 30.dp),
-            questionList = questionList.value.questionList
+            questionList = questionList.value.questionList,
+            onStartCountDown = viewModel::startCountdown
         )
     }
 }
@@ -116,11 +116,11 @@ fun TopScreen(
     }
 }
 
-@SuppressLint("SuspiciousIndentation")
 @Composable
 fun BodyScreen(
     modifier: Modifier = Modifier,
-    questionList: List<Question>
+    questionList: List<Question>,
+    onStartCountDown: (Int) -> Unit,
 ) {
     var questionNo by remember {
         mutableIntStateOf(0)
@@ -136,24 +136,24 @@ fun BodyScreen(
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Question ${questionNo + 1} of ${questionList.size - 1}",
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        if (questionList.isNotEmpty() && questionNo < questionList.size){
+        if (questionList.isNotEmpty() && questionNo < questionList.size) {
+            Text(
+                text = "Question ${questionNo + 1} of ${questionList.size - 1}",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.headlineMedium
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(ScreenDimensions.screenHeight * 0.25f)
             ) {
                 if (questionList.isNotEmpty() && questionNo < questionList.size)
-                Column {
-                    Text(text = questionList[questionNo].questionText)
-                    if (questionList[questionNo].questionText2.isNotEmpty()){
-                        Text(text = questionList[questionNo].questionText2)
+                    Column {
+                        Text(text = questionList[questionNo].questionText)
+                        if (questionList[questionNo].questionText2.isNotEmpty()) {
+                            Text(text = questionList[questionNo].questionText2)
+                        }
                     }
-                }
 
             }
             Column(
@@ -161,38 +161,42 @@ fun BodyScreen(
                     .width(ScreenDimensions.screenWidth * 0.8f),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                if (questionList.isNotEmpty() && questionNo < questionList.size && questionList[questionNo].answerOptions.isNotEmpty()){
+                if (questionList.isNotEmpty() && questionNo < questionList.size && questionList[questionNo].answerOptions.isNotEmpty()) {
                     CustomTestField(
                         onClick = { /*TODO*/ },
-                        text = questionList[questionNo +1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[0].isNotEmpty() } ?: "",
+                        text = questionList[questionNo + 1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[0].isNotEmpty() }
+                            ?: "",
                         containerColor = Color.Transparent,
                         borderColor = MaterialTheme.colorScheme.outline,
                         textColor = Color.Black
                     )
                     CustomTestField(
                         onClick = { /*TODO*/ },
-                        text = questionList[questionNo +1].answerOptions[1].takeIf { questionList[questionNo].answerOptions[1].isNotEmpty() } ?: "",
+                        text = questionList[questionNo + 1].answerOptions[1].takeIf { questionList[questionNo].answerOptions[1].isNotEmpty() }
+                            ?: "",
                         containerColor = Color.Transparent,
                         borderColor = MaterialTheme.colorScheme.outline,
                         textColor = Color.Black
                     )
                     CustomTestField(
                         onClick = { /*TODO*/ },
-                        text = questionList[questionNo +1].answerOptions[2].takeIf { questionList[questionNo].answerOptions[2].isNotEmpty() } ?: "",
+                        text = questionList[questionNo + 1].answerOptions[2].takeIf { questionList[questionNo].answerOptions[2].isNotEmpty() }
+                            ?: "",
                         containerColor = Color.Transparent,
                         borderColor = MaterialTheme.colorScheme.outline,
                         textColor = Color.Black
                     )
                     CustomTestField(
                         onClick = { /*TODO*/ },
-                        text = questionList[questionNo +1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[3].isNotEmpty() } ?: "",
+                        text = questionList[questionNo + 1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[3].isNotEmpty() }
+                            ?: "",
                         containerColor = Color.Transparent,
                         borderColor = MaterialTheme.colorScheme.outline,
                         textColor = Color.Black
                     )
                 }
             }
-        }else {
+        } else {
             CircularProgressIndicator()
         }
         CustomButton(
@@ -200,9 +204,11 @@ fun BodyScreen(
                 .width(ScreenDimensions.screenWidth * 0.8f),
             onClick = {
                 if (questionNo < questionList.size - 1) {
-                questionNo += 1
-                isNextClicked = true
-            } },
+                    questionNo += 1
+                    isNextClicked = true
+                    onStartCountDown(60)
+                }
+            },
             text = "Next ->"
         )
     }
