@@ -128,6 +128,7 @@ fun BodyScreen(
     var isNextClicked by remember {
         mutableStateOf(false)
     }
+    var selectedOptionIndex by remember { mutableStateOf(-1) }
     LaunchedEffect(key1 = questionNo) {
         isNextClicked = false
     }
@@ -162,54 +163,37 @@ fun BodyScreen(
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 if (questionList.isNotEmpty() && questionNo < questionList.size && questionList[questionNo].answerOptions.isNotEmpty()) {
-                    CustomTestField(
-                        onClick = { /*TODO*/ },
-                        text = questionList[questionNo + 1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[0].isNotEmpty() }
-                            ?: "",
-                        containerColor = Color.Transparent,
-                        borderColor = MaterialTheme.colorScheme.outline,
-                        textColor = Color.Black
-                    )
-                    CustomTestField(
-                        onClick = { /*TODO*/ },
-                        text = questionList[questionNo + 1].answerOptions[1].takeIf { questionList[questionNo].answerOptions[1].isNotEmpty() }
-                            ?: "",
-                        containerColor = Color.Transparent,
-                        borderColor = MaterialTheme.colorScheme.outline,
-                        textColor = Color.Black
-                    )
-                    CustomTestField(
-                        onClick = { /*TODO*/ },
-                        text = questionList[questionNo + 1].answerOptions[2].takeIf { questionList[questionNo].answerOptions[2].isNotEmpty() }
-                            ?: "",
-                        containerColor = Color.Transparent,
-                        borderColor = MaterialTheme.colorScheme.outline,
-                        textColor = Color.Black
-                    )
-                    CustomTestField(
-                        onClick = { /*TODO*/ },
-                        text = questionList[questionNo + 1].answerOptions[0].takeIf { questionList[questionNo].answerOptions[3].isNotEmpty() }
-                            ?: "",
-                        containerColor = Color.Transparent,
-                        borderColor = MaterialTheme.colorScheme.outline,
-                        textColor = Color.Black
-                    )
+                    for (index in questionList[questionNo].answerOptions.indices) {
+                        val option = questionList[questionNo].answerOptions[index]
+                        CustomTestField(
+                            onClick = {
+                                selectedOptionIndex = index
+                            },
+                            text = option.takeIf { it.isNotEmpty() } ?: "",
+                            containerColor = if (selectedOptionIndex == index) Color.Green else Color.Transparent,
+                            borderColor = MaterialTheme.colorScheme.outline,
+                            textColor = Color.Black
+                        )
+                    }
                 }
             }
         } else {
             CircularProgressIndicator()
         }
-        CustomButton(
-            modifier = Modifier
-                .width(ScreenDimensions.screenWidth * 0.8f),
-            onClick = {
-                if (questionNo < questionList.size - 1) {
-                    questionNo += 1
-                    isNextClicked = true
-                    onStartCountDown(60)
-                }
-            },
-            text = "Next ->"
-        )
+        Row {
+            CustomButton(
+                modifier = Modifier
+                    .width(ScreenDimensions.screenWidth * 0.8f),
+                onClick = {
+                    if (questionNo < questionList.size - 1) {
+                        questionNo += 1
+                        isNextClicked = true
+                        onStartCountDown(60)
+                    }
+                    selectedOptionIndex = -1
+                },
+                text = "Next ->"
+            )
+        }
     }
 }
