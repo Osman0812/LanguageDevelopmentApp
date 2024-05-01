@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,24 +21,37 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    viewModel: ProfileScreenViewModel = hiltViewModel()
+) {
     val scrollState = rememberScrollState()
+    val profileState by viewModel.profileState.collectAsState()
+    val auth = FirebaseAuth.getInstance()
+    val currentUser = auth.currentUser
+    val email = currentUser?.email
+    LaunchedEffect(key1 = Unit) {
+        viewModel.getUserInfo(email.toString())
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(state = scrollState)
     ) {
-
         Avatar(
             modifier = Modifier
                 .fillMaxWidth()
@@ -44,7 +59,8 @@ fun ProfileScreen() {
         )
         PersonalInfo(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(10.dp),
+            profileState = profileState
         )
         ProgressInfo(
             modifier = Modifier
@@ -75,25 +91,30 @@ fun Avatar(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PersonalInfo(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    profileState: ProfileUiState
 ) {
+    val auth = FirebaseAuth.getInstance()
+    val currentUser = auth.currentUser
+    val email = currentUser?.email
     Column(
         modifier = modifier
     ) {
         Text(
-            text = "Osman",
+            text = profileState.name.toString(),
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Row(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(text = "Email")
-            Text(text = "Join Date tarihinde katıldı")
+            Text(text = "Email: ${email.toString()}")
+            Text(text = "${profileState.joinDate} tarihinde katıldı")
         }
     }
 }

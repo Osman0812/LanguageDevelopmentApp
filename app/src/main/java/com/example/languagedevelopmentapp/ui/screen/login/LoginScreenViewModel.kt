@@ -52,6 +52,4 @@ class LoginScreenViewModel @Inject constructor() : ViewModel() {
             )
         }
     }
-
-
 }
