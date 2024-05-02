@@ -19,8 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -219,10 +219,10 @@ fun Dialog(
                     Spacer(modifier = Modifier.height(10.dp))
                 }
                 if (isQuizSelected) {
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.fillMaxWidth(),
-                        color = Color.White,
-                        thickness = 1.dp
+                        thickness = 1.dp,
+                        color = Color.White
                     )
                     CustomLevelField(
                         modifier = Modifier

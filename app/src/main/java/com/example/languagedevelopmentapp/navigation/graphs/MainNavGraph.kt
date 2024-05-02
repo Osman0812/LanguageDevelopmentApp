@@ -1,23 +1,26 @@
 package com.example.languagedevelopmentapp.navigation.graphs
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navigation
 import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreenViewModel
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.readingscreen.ReadingScreen
 import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileScreen
 import com.example.languagedevelopmentapp.ui.screen.main.vocabulary.VocabularyScreen
+import com.example.languagedevelopmentapp.ui.screen.resultscreen.ResultScreen
 
 @Composable
-fun MainNavGraph(navController: NavHostController) {
+fun MainNavGraph(
+    navController: NavHostController,
+    viewModel: PracticeScreenViewModel = hiltViewModel()
+) {
     NavHost(
         navController = navController,
         route = Graph.MAIN,
@@ -35,9 +38,9 @@ fun MainNavGraph(navController: NavHostController) {
         composable(route = BottomBarScreen.Practice.route) {
             PrePracticeScreen(
                 navigateTo = {
-                    if (it == "READING_SCREEN"){
+                    if (it == "READING_SCREEN") {
                         navController.navigate(Screens.ReadingScreen.route)
-                    }else {
+                    } else {
                         navController.navigate(Screens.PracticeScreen.route)
                     }
                 }
@@ -52,22 +55,16 @@ fun MainNavGraph(navController: NavHostController) {
         composable(route = Screens.ReadingScreen.route) {
             ReadingScreen()
         }
-        composable(route = Screens.PracticeScreen.route) {
-            PracticeScreen(
-                navigateToBack = navigateToBack
+        composable(route = Screens.ResultScreen.route) {
+            ResultScreen(
+                viewModel = viewModel
             )
         }
-    }
-}
-
-private fun NavGraphBuilder.subNavGraph(navController: NavController) {
-    navigation(
-        route = Graph.SUB,
-        startDestination = Screens.PracticeScreen.route
-    ) {
         composable(route = Screens.PracticeScreen.route) {
             PracticeScreen(
-                navigateToBack = { navController.popBackStack() }
+                navigateToBack = navigateToBack,
+                navigateToResultScreen = { navController.navigate(Screens.ResultScreen.route) },
+                viewModel = viewModel
             )
         }
     }
