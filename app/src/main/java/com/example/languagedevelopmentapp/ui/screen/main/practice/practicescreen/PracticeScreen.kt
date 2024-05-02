@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
@@ -26,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.ui.component.CustomButton
 import com.example.languagedevelopmentapp.ui.component.CustomTestField
@@ -43,11 +45,16 @@ import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 @Composable
 fun PracticeScreen(
     navigateToBack: () -> Unit,
-    viewModel: PracticeScreenViewModel = hiltViewModel()
+    navigateToResultScreen: () -> Unit,
+    viewModel: PracticeScreenViewModel
 ) {
     val remainingTime = viewModel.remainingTime.collectAsState(initial = 60).value
     val questionList = viewModel.questionList.collectAsState()
+    val result = viewModel.resultScreenUiState.collectAsState()
 
+    LaunchedEffect(key1 = Unit) {
+        viewModel.getQuestions()
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -62,7 +69,9 @@ fun PracticeScreen(
                 .fillMaxSize()
                 .padding(start = 30.dp, end = 30.dp),
             questionList = questionList.value.questionList,
-            onStartCountDown = viewModel::startCountdown
+            onStartCountDown = viewModel::startCountdown,
+            navigateToResultScreen = navigateToResultScreen,
+            onGetUserResult = viewModel::getUserLevel
         )
     }
 }
@@ -89,7 +98,7 @@ fun TopScreen(
                 CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
                     IconButton(onClick = { navigateToBack() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back Icon",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -112,7 +121,7 @@ fun TopScreen(
                 Text(text = remainingTime.toString())
             }
         }
-        Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -121,6 +130,8 @@ fun BodyScreen(
     modifier: Modifier = Modifier,
     questionList: List<Question>,
     onStartCountDown: (Int) -> Unit,
+    navigateToResultScreen: () -> Unit,
+    onGetUserResult: (List<String>) -> Unit
 ) {
     var questionNo by remember {
         mutableIntStateOf(0)
@@ -128,72 +139,92 @@ fun BodyScreen(
     var isNextClicked by remember {
         mutableStateOf(false)
     }
-    var selectedOptionIndex by remember { mutableStateOf(-1) }
+    var selectedOptionIndex by remember { mutableIntStateOf(-1) }
+    val selectedOptions = remember { mutableStateListOf<String>() }
     LaunchedEffect(key1 = questionNo) {
         isNextClicked = false
     }
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (questionList.isNotEmpty() && questionNo < questionList.size) {
+    if (questionNo == questionList.size - 1) {
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
-                text = "Question ${questionNo + 1} of ${questionList.size - 1}",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.headlineMedium
+                text = "You Completed The Test!",
+                style = MaterialTheme.typography.displayMedium
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ScreenDimensions.screenHeight * 0.25f)
-            ) {
-                if (questionList.isNotEmpty() && questionNo < questionList.size)
-                    Column {
-                        Text(text = questionList[questionNo].questionText)
-                        if (questionList[questionNo].questionText2.isNotEmpty()) {
-                            Text(text = questionList[questionNo].questionText2)
+            CustomButton(
+                onClick = {
+                    navigateToResultScreen()
+                    onGetUserResult(selectedOptions.toList())
+                },
+                text = "See Results"
+            )
+        }
+    } else {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (questionList.isNotEmpty() && questionNo < questionList.size) {
+                Text(
+                    text = "Question ${questionNo + 1} of ${questionList.size - 1}",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(ScreenDimensions.screenHeight * 0.25f)
+                ) {
+                    if (questionList.isNotEmpty() && questionNo < questionList.size)
+                        Column {
+                            Text(text = questionList[questionNo].questionText)
+                            if (questionList[questionNo].questionText2.isNotEmpty()) {
+                                Text(text = questionList[questionNo].questionText2)
+                            }
+                        }
+                }
+                Column(
+                    modifier = Modifier
+                        .width(ScreenDimensions.screenWidth * 0.8f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    if (questionList.isNotEmpty() && questionNo < questionList.size && questionList[questionNo].answerOptions.isNotEmpty()) {
+                        for (index in questionList[questionNo].answerOptions.indices) {
+                            val option = questionList[questionNo].answerOptions[index]
+                            CustomTestField(
+                                onClick = {
+                                    selectedOptions.add(option)
+                                    selectedOptionIndex = index
+                                },
+                                text = option.takeIf { it.isNotEmpty() } ?: "",
+                                containerColor = if (selectedOptionIndex == index) Color.Green else Color.Transparent,
+                                borderColor = MaterialTheme.colorScheme.outline,
+                                textColor = Color.Black
+                            )
                         }
                     }
-
-            }
-            Column(
-                modifier = Modifier
-                    .width(ScreenDimensions.screenWidth * 0.8f),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                if (questionList.isNotEmpty() && questionNo < questionList.size && questionList[questionNo].answerOptions.isNotEmpty()) {
-                    for (index in questionList[questionNo].answerOptions.indices) {
-                        val option = questionList[questionNo].answerOptions[index]
-                        CustomTestField(
-                            onClick = {
-                                selectedOptionIndex = index
-                            },
-                            text = option.takeIf { it.isNotEmpty() } ?: "",
-                            containerColor = if (selectedOptionIndex == index) Color.Green else Color.Transparent,
-                            borderColor = MaterialTheme.colorScheme.outline,
-                            textColor = Color.Black
-                        )
-                    }
                 }
+            } else {
+                CircularProgressIndicator()
             }
-        } else {
-            CircularProgressIndicator()
-        }
-        Row {
-            CustomButton(
-                modifier = Modifier
-                    .width(ScreenDimensions.screenWidth * 0.8f),
-                onClick = {
-                    if (questionNo < questionList.size - 1) {
-                        questionNo += 1
-                        isNextClicked = true
-                        onStartCountDown(60)
-                    }
-                    selectedOptionIndex = -1
-                },
-                text = "Next ->"
-            )
+            Row {
+                CustomButton(
+                    modifier = Modifier
+                        .width(ScreenDimensions.screenWidth * 0.8f),
+                    onClick = {
+                        if (questionNo < questionList.size - 1) {
+                            questionNo += 1
+                            isNextClicked = true
+                            onStartCountDown(60)
+                        }
+                        selectedOptionIndex = -1
+                    },
+                    text = "Next ->"
+                )
+            }
         }
     }
 }
