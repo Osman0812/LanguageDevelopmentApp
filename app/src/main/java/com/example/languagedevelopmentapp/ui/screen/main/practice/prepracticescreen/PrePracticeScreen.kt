@@ -1,5 +1,6 @@
 package com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,13 +19,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +45,7 @@ import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.component.CustomButton
 import com.example.languagedevelopmentapp.ui.component.CustomLevelField
 import com.example.languagedevelopmentapp.ui.component.CustomProfileIcon
+import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileUiState
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
@@ -49,6 +53,7 @@ fun PrePracticeScreen(
     viewModel: PrePracticeScreenViewModel = hiltViewModel(),
     navigateTo: (String) -> Unit
 ) {
+    val userInfoState by viewModel.userInfo.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -64,7 +69,8 @@ fun PrePracticeScreen(
                     color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(15.dp)
                 ),
-            navigateTo = navigateTo
+            navigateTo = navigateTo,
+            userInfo = userInfoState
         )
         PrePracticeTop(
             modifier = Modifier
@@ -98,7 +104,8 @@ fun PrePracticeTop(
 @Composable
 fun PrePracticeScreenBody(
     modifier: Modifier = Modifier,
-    navigateTo: (String) -> Unit
+    navigateTo: (String) -> Unit,
+    userInfo: ProfileUiState
 ) {
     var isReadingSelected by remember { mutableStateOf(false) }
     var isQuizSelected by remember { mutableStateOf(false) }
@@ -152,10 +159,10 @@ fun PrePracticeScreenBody(
                 .width(ScreenDimensions.screenWidth * 0.3f),
             onClick = {
                 isShowDialog = !isShowDialog
-                if(isReadingSelected){
+                if (isReadingSelected) {
                     navigateTo(Screens.ReadingScreen.route)
                 }
-                      },
+            },
             text = stringResource(id = R.string.start_text),
             isEnabled = true.takeIf { isReadingSelected || isQuizSelected } ?: false
         )
@@ -177,7 +184,8 @@ fun PrePracticeScreenBody(
                 onChangeIsShowDialog = { isShowDialog = it },
                 levelList = levelList,
                 isQuizSelected = isQuizSelected,
-                navigateTo = navigateTo
+                navigateTo = navigateTo,
+                userLevel = userInfo.level.toString()
             )
         }
     }
@@ -190,12 +198,22 @@ fun Dialog(
     onChangeIsShowDialog: (Boolean) -> Unit,
     levelList: List<String> = emptyList(),
     isQuizSelected: Boolean,
-    navigateTo: (String) -> Unit
+    navigateTo: (String) -> Unit,
+    userLevel: String
 ) {
+    Log.d("userLevel", userLevel)
+    var isEnabled by remember {
+        mutableStateOf(true)
+    }
+    LaunchedEffect(key1 = Unit) {
+        if (userLevel == "Unknown") {
+            isEnabled = false
+        }
+    }
     var selectedLevel: String by remember { mutableStateOf("") }
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = { onChangeIsShowDialog(false) }
+    BasicAlertDialog(
+        onDismissRequest = { onChangeIsShowDialog(false) },
+        modifier = modifier
     ) {
         Box {
             Column(
@@ -215,6 +233,7 @@ fun Dialog(
                             selectedLevel = it
                         },
                         isLevelSelected = selectedLevel == it,
+                        isEnabled = isEnabled
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -253,10 +272,10 @@ fun Dialog(
             ) {
                 CustomButton(
                     onClick = {
-                              if (selectedLevel == "test"){
-                                  onChangeIsShowDialog(false)
-                                  navigateTo(Screens.PracticeScreen.route)
-                              }
+                        if (selectedLevel == "test") {
+                            onChangeIsShowDialog(false)
+                            navigateTo(Screens.PracticeScreen.route)
+                        }
                     },
                     text = stringResource(id = R.string.start_text),
                     isEnabled = selectedLevel.isNotEmpty()

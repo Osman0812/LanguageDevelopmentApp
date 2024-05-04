@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,7 +27,8 @@ import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions.Companion.sc
 
 @Composable
 fun ResultScreen(
-    viewModel: PracticeScreenViewModel
+    viewModel: PracticeScreenViewModel,
+    navigateToHomeScreen: () -> Unit
 ) {
     val resultState = viewModel.resultScreenUiState.collectAsState().value
     Box(
@@ -82,6 +84,7 @@ fun ResultScreen(
                             .width(screenWidth * 0.8f)
                             .align(Alignment.CenterHorizontally),
                         onClick = {
+                            navigateToHomeScreen()
 
                         },
                         text = "Bitir"
@@ -99,4 +102,16 @@ fun ResultScreen(
             }
         }
     }
+}
+
+@Composable
+fun BadgeAlert(
+    modifier: Modifier = Modifier
+) {
+    AlertDialog(
+        onDismissRequest = { /*TODO*/ },
+        confirmButton = {
+
+        }
+    )
 }
