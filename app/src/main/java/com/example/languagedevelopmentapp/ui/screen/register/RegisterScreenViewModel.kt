@@ -86,6 +86,7 @@ class RegisterScreenViewModel @Inject constructor() : ViewModel() {
         map["surname"] = surname
         map["email"] = email
         map["password"] = password
+        map["level"] = "Unknown"
         map["joinDate"] = Timestamp.now().toDate()
         viewModelScope.launch {
             val firestore = Firebase.firestore

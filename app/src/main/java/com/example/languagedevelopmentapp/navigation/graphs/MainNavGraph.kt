@@ -57,7 +57,17 @@ fun MainNavGraph(
         }
         composable(route = Screens.ResultScreen.route) {
             ResultScreen(
-                viewModel = viewModel
+                viewModel = viewModel,
+                navigateToHomeScreen = {
+                    navController.navigate(BottomBarScreen.Home.route)
+                    {
+                        popUpTo(
+                            navController.graph.startDestinationRoute.toString()
+                        ) {
+                            inclusive = true
+                        }
+                    }
+                }
             )
         }
         composable(route = Screens.PracticeScreen.route) {

@@ -2,13 +2,15 @@ package com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticesc
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import com.example.languagedevelopmentapp.BuildConfig
-import com.google.ai.client.generativeai.GenerativeModel
+import androidx.lifecycle.viewModelScope
+import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileUiState
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,22 +21,43 @@ class PrePracticeScreenViewModel @Inject constructor(
     private val _words = MutableStateFlow(PrePracticeUiModel())
     val words = _words.asStateFlow()
 
+    private val auth = FirebaseAuth.getInstance()
+    private val currentUser = auth.currentUser
+
+    private val firestore = Firebase.firestore
+    private val reference = firestore.collection("Users").document(currentUser?.email.toString())
+
+    private val _userInfo = MutableStateFlow(ProfileUiState())
+    val userInfo = _userInfo.asStateFlow()
+
     init {
         getWords()
+        getUserLevelInfo()
     }
 
     private fun getWords() {
-        val firestore = Firebase.firestore
-        val wordStringBuilder = StringBuilder()
-        firestore.collection("Words")
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val word = document.id
-                    wordStringBuilder.append("$word, ")
+        viewModelScope.launch {
+            val firestore = Firebase.firestore
+            val wordStringBuilder = StringBuilder()
+            firestore.collection("Words")
+                .get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        val word = document.id
+                        wordStringBuilder.append("$word, ")
+                    }
+                    val wordString = wordStringBuilder.toString().trimEnd { it == ',' }
+                    _words.value = _words.value.copy(readingTextWords = wordString)
                 }
-                val wordString = wordStringBuilder.toString().trimEnd { it == ',' }
-                _words.value = _words.value.copy(readingTextWords = wordString)
+        }
+    }
+
+    private fun getUserLevelInfo() {
+        viewModelScope.launch {
+            reference.get().addOnSuccessListener {
+                val level = it.getString("level")
+                _userInfo.value = _userInfo.value.copy(level = level)
             }
+        }
     }
 }
