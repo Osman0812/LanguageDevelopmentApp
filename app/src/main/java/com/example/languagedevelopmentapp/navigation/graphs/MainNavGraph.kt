@@ -57,7 +57,7 @@ fun MainNavGraph(
         }
         composable(route = Screens.ResultScreen.route) {
             ResultScreen(
-                viewModel = viewModel,
+                practiceScreenViewModel = viewModel,
                 navigateToHomeScreen = {
                     navController.navigate(BottomBarScreen.Home.route)
                     {

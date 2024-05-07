@@ -1,5 +1,6 @@
 package com.example.languagedevelopmentapp.ui.screen.main.profile
 
+import androidx.collection.MutableIntList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
@@ -23,7 +24,6 @@ class ProfileScreenViewModel @Inject constructor(
     fun getUserInfo(
         email: String
     ) {
-
         val reference = firestore.collection("Users").document(email)
         viewModelScope.launch {
             reference.get()
@@ -33,20 +33,23 @@ class ProfileScreenViewModel @Inject constructor(
                         val surname = document.getString("surname")
                         val joinDate = document.getTimestamp("joinDate")
                         val password = document.getString("password")
-
+                        val level = document.getString("level")
                         val date = joinDate?.let { timestampToDate(it) }
+                        val list: List<Int>? = document.get("achievements") as List<Int>?
                         _profileState.value = _profileState.value.copy(
                             name = name,
                             surname = surname,
                             password = password,
-                            joinDate = date
+                            joinDate = date,
+                            level = level,
+                            achievements = list
                         )
                     }
                 }
         }
     }
 
-    fun timestampToDate(timestamp: Timestamp): String {
+    private fun timestampToDate(timestamp: Timestamp): String {
         val date = timestamp.toDate()
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         return format.format(date)

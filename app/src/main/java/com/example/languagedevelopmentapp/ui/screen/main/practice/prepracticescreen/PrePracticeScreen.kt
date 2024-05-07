@@ -111,12 +111,10 @@ fun PrePracticeScreenBody(
     var isQuizSelected by remember { mutableStateOf(false) }
     var isShowDialog by remember { mutableStateOf(false) }
     val levelList = listOf(
-        "Beginner",
-        "Elementary",
-        "Pre-Intermediate",
-        "Intermediate",
-        "Upper-Intermediate",
-        "Advanced"
+        "Synonyms",
+        "Antonyms",
+        "Close Meaning",
+        "Reinforce Vocabulary",
     )
     Column(
         modifier = modifier,
