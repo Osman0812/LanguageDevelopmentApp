@@ -32,12 +32,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
+import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreenViewModel
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileScreenViewModel = hiltViewModel()
+    viewModel: ProfileScreenViewModel = hiltViewModel(),
 ) {
     val scrollState = rememberScrollState()
     val profileState by viewModel.profileState.collectAsState()
@@ -64,11 +65,13 @@ fun ProfileScreen(
         )
         ProgressInfo(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(10.dp),
+            profileState = profileState
         )
         WinningsPart(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(10.dp),
+            profileState = profileState
         )
     }
 
@@ -121,7 +124,8 @@ fun PersonalInfo(
 
 @Composable
 fun ProgressInfo(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    profileState: ProfileUiState
 ) {
     Column(
         modifier = modifier
@@ -150,7 +154,7 @@ fun ProgressInfo(
                 ) {
                     Text(text = "Level:")
                     Text(
-                        text = "Beginner"
+                        text = profileState.level.toString()
                     )
                 }
                 Row(
@@ -166,7 +170,8 @@ fun ProgressInfo(
 
 @Composable
 fun WinningsPart(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    profileState: ProfileUiState
 ) {
     Column(
         modifier = modifier
@@ -176,12 +181,14 @@ fun WinningsPart(
             style = MaterialTheme.typography.displaySmall
         )
         Row {
-            Image(
-                modifier = Modifier
-                    .size(50.dp),
-                painter = painterResource(id = R.drawable.ic_badge_1),
-                contentDescription = "Rozet"
-            )
+            profileState.achievements?.forEach {
+                Image(
+                    modifier = Modifier
+                        .size(50.dp),
+                    painter = painterResource(id = it),
+                    contentDescription = "Rozet"
+                )
+            }
         }
     }
 }

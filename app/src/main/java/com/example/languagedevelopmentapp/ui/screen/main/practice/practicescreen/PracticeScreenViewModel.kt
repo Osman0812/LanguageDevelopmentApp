@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.BuildConfig
 import com.example.languagedevelopmentapp.ui.screen.resultscreen.ResultScreenUiModel
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +39,9 @@ class PracticeScreenViewModel @Inject constructor(
 
     private val _resultScreenUiState = MutableStateFlow(ResultScreenUiModel())
     val resultScreenUiState = _resultScreenUiState.asStateFlow()
+
+    private val firestore = Firebase.firestore
+    private val wordsReference = firestore.collection("Words")
     fun startCountdown(time: Int) {
         viewModelScope.launch {
             _remainingTime.value = time
@@ -47,14 +52,28 @@ class PracticeScreenViewModel @Inject constructor(
         }
     }
 
-    fun getQuestions() {
-        viewModelScope.launch {
-            val prompt =
-                "Write a english level determination quiz, 11 questions,only questions and 4 options per each"
-            val response = generativeModel.generateContent(prompt)
-            Log.d("questions", response.text.toString())
-            parseQuestions(response.text ?: "")
-        }
+    fun getQuestions(testName: String) {
+
+            val words = mutableListOf<String>()
+            wordsReference.get()
+                .addOnSuccessListener {result->
+                    for (document in result) {
+                        words.add(document.id)
+                    }
+                }
+                .addOnCompleteListener {
+                    viewModelScope.launch {
+                        Log.d("words",words.toString())
+                        val synonymsPrompt =
+                            "Write a english quiz with $testName of $words, user should learn $testName of $words. Make up questions like example usage in sentences or paragraphs, 11 questions,only questions and 4 options per each"
+                        val prompt =
+                            "Write a english level determination quiz, 11 questions,only questions and 4 options per each"
+                        val response = generativeModel.generateContent(synonymsPrompt)
+                        Log.d("questions", response.text.toString())
+                        parseQuestions(response.text ?: "")
+                    }
+                }
+
     }
 
     fun getUserLevel(answers: List<String>) {

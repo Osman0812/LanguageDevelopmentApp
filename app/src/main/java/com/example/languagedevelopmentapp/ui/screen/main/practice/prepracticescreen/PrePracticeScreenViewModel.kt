@@ -1,6 +1,7 @@
 package com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileUiState
@@ -25,7 +26,7 @@ class PrePracticeScreenViewModel @Inject constructor(
     private val currentUser = auth.currentUser
 
     private val firestore = Firebase.firestore
-    private val reference = firestore.collection("Users").document(currentUser?.email.toString())
+    private val userReference = firestore.collection("Users").document(currentUser?.email.toString())
 
     private val _userInfo = MutableStateFlow(ProfileUiState())
     val userInfo = _userInfo.asStateFlow()
@@ -37,7 +38,6 @@ class PrePracticeScreenViewModel @Inject constructor(
 
     private fun getWords() {
         viewModelScope.launch {
-            val firestore = Firebase.firestore
             val wordStringBuilder = StringBuilder()
             firestore.collection("Words")
                 .get()
@@ -52,10 +52,25 @@ class PrePracticeScreenViewModel @Inject constructor(
         }
     }
 
+    fun saveInfoToFirebase(profileUiState: ProfileUiState) {
+        viewModelScope.launch {
+            val list = profileUiState.achievements?.toList()
+            val map = hashMapOf<String,Any>()
+            map["level"] = profileUiState.level.toString()
+            if (list != null) {
+                map["achievements"] = list
+            }
+            userReference.update(map).addOnSuccessListener {
+                Log.d("Updated","User Info Updated")
+            }
+        }
+    }
+
     private fun getUserLevelInfo() {
         viewModelScope.launch {
-            reference.get().addOnSuccessListener {
+            userReference.get().addOnSuccessListener {
                 val level = it.getString("level")
+                Log.d("level",level.toString())
                 _userInfo.value = _userInfo.value.copy(level = level)
             }
         }

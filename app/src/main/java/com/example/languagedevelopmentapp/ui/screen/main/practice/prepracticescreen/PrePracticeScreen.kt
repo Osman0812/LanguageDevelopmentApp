@@ -110,13 +110,11 @@ fun PrePracticeScreenBody(
     var isReadingSelected by remember { mutableStateOf(false) }
     var isQuizSelected by remember { mutableStateOf(false) }
     var isShowDialog by remember { mutableStateOf(false) }
-    val levelList = listOf(
-        "Beginner",
-        "Elementary",
-        "Pre-Intermediate",
-        "Intermediate",
-        "Upper-Intermediate",
-        "Advanced"
+    val testList = listOf(
+        "Synonyms",
+        "Antonyms",
+        "Close Meaning",
+        "Reinforce Vocabulary",
     )
     Column(
         modifier = modifier,
@@ -182,7 +180,7 @@ fun PrePracticeScreenBody(
                     )
                     .padding(10.dp),
                 onChangeIsShowDialog = { isShowDialog = it },
-                levelList = levelList,
+                levelList = testList,
                 isQuizSelected = isQuizSelected,
                 navigateTo = navigateTo,
                 userLevel = userInfo.level.toString()
@@ -221,6 +219,23 @@ fun Dialog(
                     .fillMaxWidth()
                     .padding(10.dp)
             ) {
+                levelList.forEachIndexed { index, s ->
+                    CustomLevelField(
+                        modifier = Modifier
+                            .background(
+                                color = if (selectedLevel == s) Color.Green else Color.White,
+                                shape = RoundedCornerShape(5.dp)
+                            ),
+                        text = s,
+                        onClick = {
+                            selectedLevel = s
+                        },
+                        isLevelSelected = selectedLevel == s,
+                        isEnabled = isEnabled
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                /*
                 levelList.forEach {
                     CustomLevelField(
                         modifier = Modifier
@@ -237,6 +252,8 @@ fun Dialog(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
+
+                 */
                 if (isQuizSelected) {
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth(),
@@ -272,11 +289,9 @@ fun Dialog(
             ) {
                 CustomButton(
                     onClick = {
-                        if (selectedLevel == "test") {
-                            onChangeIsShowDialog(false)
-                            navigateTo(Screens.PracticeScreen.route)
-                        }
-                    },
+                        onChangeIsShowDialog(false)
+                        navigateTo("${Screens.PracticeScreen.route}/$selectedLevel")
+                              },
                     text = stringResource(id = R.string.start_text),
                     isEnabled = selectedLevel.isNotEmpty()
                 )
