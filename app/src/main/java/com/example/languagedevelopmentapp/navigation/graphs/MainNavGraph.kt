@@ -39,9 +39,9 @@ fun MainNavGraph(
             PrePracticeScreen(
                 navigateTo = {
                     if (it == "READING_SCREEN") {
-                        navController.navigate(Screens.ReadingScreen.route)
+                        navController.navigate(it)
                     } else {
-                        navController.navigate(Screens.PracticeScreen.route)
+                        navController.navigate(it)
                     }
                 }
             )
@@ -70,8 +70,9 @@ fun MainNavGraph(
                 }
             )
         }
-        composable(route = Screens.PracticeScreen.route) {
+        composable(route = "${Screens.PracticeScreen.route}/{testName}") {
             PracticeScreen(
+                testName = it.arguments?.getString("testName").toString(),
                 navigateToBack = navigateToBack,
                 navigateToResultScreen = { navController.navigate(Screens.ResultScreen.route) },
                 viewModel = viewModel
