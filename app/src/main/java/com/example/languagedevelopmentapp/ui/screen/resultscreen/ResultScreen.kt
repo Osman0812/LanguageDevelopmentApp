@@ -1,7 +1,6 @@
 package com.example.languagedevelopmentapp.ui.screen.resultscreen
 
 import android.util.Log
-import androidx.collection.MutableIntList
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -130,6 +129,8 @@ fun ResultScreen(
                 navigateToHomeScreen = navigateToHomeScreen,
                 onUpdateUserInfo = prePracticeScreenViewModel::saveInfoToFirebase
             )
+        } else if (isShowDialog && userInfo.level == "Beginner") {
+            navigateToHomeScreen()
         }
     }
 }
@@ -159,10 +160,10 @@ fun BadgeAlert(
             verticalArrangement = Arrangement.Center
         ) {
             if (userLevel == "Unknown") {
-                Column (
+                Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     Text(
                         text = "Tebrikler!",
                         style = MaterialTheme.typography.displayMedium,

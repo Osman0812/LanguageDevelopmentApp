@@ -1,6 +1,5 @@
 package com.example.languagedevelopmentapp.ui.screen.main.vocabulary
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -93,10 +92,15 @@ fun VocabularyScreen(
             pullToRefreshState.endRefresh()
         }
     }
-    PullToRefreshContainer(
-        modifier = Modifier,
-        state = pullToRefreshState
-    )
+    Box(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        PullToRefreshContainer(
+            modifier = Modifier
+                .align(Alignment.Center),
+            state = pullToRefreshState
+        )
+    }
 }
 
 @Composable
@@ -108,6 +112,21 @@ fun VocabularyScreenBody(
         mutableStateOf("")
     }
     val fieldBackgroundColor = MaterialTheme.colorScheme.inverseOnSurface
+
+    val filteredWordList = remember(searchText, wordListState.wordList) {
+        wordListState.wordList.filter { pair ->
+            pair.first.contains(searchText, ignoreCase = true) || pair.second.contains(
+                searchText,
+                ignoreCase = true
+            )
+        }
+    }
+    val filteredSynonyms = remember(searchText, wordListState.synonyms) {
+        wordListState.synonyms.filterIndexed { index, _ ->
+            wordListState.wordList[index].first.contains(searchText, ignoreCase = true) ||
+                    wordListState.wordList[index].second.contains(searchText, ignoreCase = true)
+        }
+    }
     Box(
         modifier = modifier
     ) {
@@ -150,27 +169,24 @@ fun VocabularyScreenBody(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                 )
-
             )
             Spacer(modifier = Modifier.height(10.dp))
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                repeat(wordListState.wordList.size) {
-                    item {
-                        SingleRowItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 10.dp, end = 10.dp),
-                            wordListPair = wordListState.wordList[it],
-                            hashMapList = wordListState.synonyms[it]
-                        )
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = MaterialTheme.colorScheme.inverseOnSurface
-                        )
-                    }
+                items(filteredWordList.size) { index ->
+                    SingleRowItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 10.dp),
+                        wordListPair = filteredWordList[index],
+                        hashMapList = filteredSynonyms[index]
+                    )
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.inverseOnSurface
+                    )
                 }
             }
         }

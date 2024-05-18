@@ -1,6 +1,7 @@
 package com.example.languagedevelopmentapp.ui.screen.main.practice.readingscreen
 
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.lifecycle.AndroidViewModel
@@ -71,45 +72,57 @@ class ReadingScreenViewModel @Inject constructor(
 
     private fun readingExercise(words: String) {
         viewModelScope.launch {
-            val prompt = "Write a long story, use $words"
+            Log.d("words",words)
+            val prompt = "İ want to learn better these words:$words. Write a paragraph for me."
             val response = generativeModel.generateContent(prompt)
-            _words.value = _words.value.copy(readingText = response.text.toString())
+            val translatePrompt = "translate ${response.text.toString()} to turkish"
+            val translateResponse = generativeModel.generateContent(translatePrompt)
+            Log.d("translate",translateResponse.text.toString())
+            _words.value = _words.value.copy(readingText = response.text.toString(), translatedReadingText = translateResponse.text.toString())
         }
     }
 
     fun processText(text: String) {
-        val splitText = text.split(" ")
-        val annotatedString = buildAnnotatedString {
-            splitText.forEachIndexed { index, word ->
-                if (index > 0) {
-                    append(" ")
+        viewModelScope.launch {
+            val splitText = text.split(" ")
+            val annotatedString = buildAnnotatedString {
+                splitText.forEachIndexed { index, word ->
+                    if (index > 0) {
+                        append(" ")
+                    }
+                    append(word)
                 }
-                append(word)
             }
+            _selectedWord.value = annotatedString.toString()
         }
-        _selectedWord.value = annotatedString.toString()
     }
 
     fun translateModel(word: String = "") {
-        val options = TranslatorOptions.Builder()
-            .setSourceLanguage(TranslateLanguage.ENGLISH)
-            .setTargetLanguage(TranslateLanguage.TURKISH)
-            .build()
-        val englishTurkishTranslator = Translation.getClient(options)
+        viewModelScope.launch {
+            val options = TranslatorOptions.Builder()
+                .setSourceLanguage(TranslateLanguage.ENGLISH)
+                .setTargetLanguage(TranslateLanguage.TURKISH)
+                .build()
+            val englishTurkishTranslator = Translation.getClient(options)
 
-        val turkishModel = TranslateRemoteModel.Builder(TranslateLanguage.TURKISH).build()
-        val conditions = DownloadConditions.Builder()
-            .requireWifi()
-            .build()
-        modelManager.download(turkishModel, conditions)
-            .addOnSuccessListener {
-                if (word.isNotEmpty()) {
-                    englishTurkishTranslator.translate(word)
-                        .addOnSuccessListener {
+            val turkishModel = TranslateRemoteModel.Builder(TranslateLanguage.TURKISH).build()
+            val conditions = DownloadConditions.Builder()
+                .requireWifi()
+                .build()
+            modelManager.download(turkishModel, conditions)
+                .addOnSuccessListener {
+                    Log.d("translated","asda")
+                    if (word.isNotEmpty()) {
+                        englishTurkishTranslator.translate(word)
+                            .addOnSuccessListener {
+                                _words.value = _words.value.copy(translatedSelectedText = it)
 
-                        }
+                            }
+                    }
                 }
-
-            }
+        }
+    }
+    fun clearState() {
+        _words.value = _words.value.copy(translatedSelectedText = "")
     }
 }
