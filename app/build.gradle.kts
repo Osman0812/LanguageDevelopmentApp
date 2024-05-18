@@ -116,4 +116,7 @@ dependencies {
 
     //Swipe To Refresh
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01")
+
+    //Pager
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
 }

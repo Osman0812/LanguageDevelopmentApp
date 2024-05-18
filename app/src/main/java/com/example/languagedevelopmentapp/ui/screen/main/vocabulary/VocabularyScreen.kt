@@ -1,6 +1,8 @@
 package com.example.languagedevelopmentapp.ui.screen.main.vocabulary
 
+import android.graphics.drawable.GradientDrawable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,21 +12,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,18 +54,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalPagerApi::class
+)
 @Composable
 fun VocabularyScreen(
     viewModel: VocabularyScreenViewModel = hiltViewModel()
 ) {
+    val pagerState = com.google.accompanist.pager.rememberPagerState()
+    val coroutineScope = rememberCoroutineScope()
     val wordListState = viewModel.wordListState.collectAsState().value
     val pullToRefreshState = rememberPullToRefreshState()
     val scope = rememberCoroutineScope()
@@ -64,22 +89,63 @@ fun VocabularyScreen(
                 color = MaterialTheme.colorScheme.primary
             )
     ) {
-        VocabularyScreenBody(
-            modifier = Modifier
-                .padding(10.dp)
-                .fillMaxSize()
-                .background(
-                    color = MaterialTheme.colorScheme.background,
-                    shape = RoundedCornerShape(5.dp)
-                ),
-            wordListState = wordListState
-        )
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            val titles = listOf("Words", "Lists")
+            titles.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = { Text(title) }
+                )
+            }
+        }
+
+        HorizontalPager(
+            count = 2,
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { page ->
+            when (page) {
+                0 -> VocabularyScreenBody(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxSize()
+                        .background(
+                            color = MaterialTheme.colorScheme.background,
+                            shape = RoundedCornerShape(5.dp)
+                        ),
+                    wordListState = wordListState
+                )
+
+                1 -> ListsScreen(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxSize()
+                        .background(
+                            color = MaterialTheme.colorScheme.background,
+                            shape = RoundedCornerShape(5.dp)
+                        ),
+                    wordListState = wordListState,
+                    onCreateList = viewModel::onCreateList
+                )
+            }
+        }
+
+
     }
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(key1 = true) {
             scope.launch {
                 isRefreshing = true
                 viewModel.getWords()
+                viewModel.getLists()
                 delay(3000L)
                 isRefreshing = false
             }
@@ -100,6 +166,185 @@ fun VocabularyScreen(
                 .align(Alignment.Center),
             state = pullToRefreshState
         )
+    }
+}
+
+@Composable
+fun ListsScreen(
+    modifier: Modifier = Modifier,
+    wordListState: VocabularyUiModel,
+    onCreateList: (String) -> Unit
+) {
+    var searchText by remember {
+        mutableStateOf("")
+    }
+    val fieldBackgroundColor = MaterialTheme.colorScheme.inverseOnSurface
+
+    var showDialog by remember { mutableStateOf(false) }
+    var listName by remember { mutableStateOf(TextFieldValue("")) }
+    Box(
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(15.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "My Lists",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    modifier = Modifier
+                        .clickable(
+                            onClick = {
+                                showDialog = true
+                            }
+                        ),
+                    imageVector = Icons.Outlined.Add,
+                    contentDescription = "Add Icon"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                value = searchText,
+                onValueChange = { searchText = it },
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = "TextField Search Icon"
+                    )
+                },
+                placeholder = {
+                    Text(
+                        modifier = Modifier,
+                        text = stringResource(id = R.string.search_list_field_placeholder),
+                        textAlign = TextAlign.Justify
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = fieldBackgroundColor,
+                    unfocusedContainerColor = fieldBackgroundColor,
+                    disabledContainerColor = fieldBackgroundColor,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                )
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                items(wordListState.listNames){ name ->
+                    ListItemCard(
+                        listName = name,
+                        onClick = {
+                            // Handle list item click
+                        }
+                    )
+            }
+
+        }
+    }
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showDialog = false
+            },
+            title = {
+                Text(text = "Create New List")
+            },
+            text = {
+                Column {
+                    Text(text = "Enter list name:")
+                    TextField(
+                        value = listName,
+                        onValueChange = { listName = it },
+                        placeholder = { Text("List Name") }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onCreateList(listName.text)
+                        showDialog = false
+                    }
+                ) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+
+                        showDialog = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeToDeleteItem(
+    items: List<String>,
+    onItemDismiss: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        items(items) { item ->
+            val dismissState = rememberSwipeToDismissBoxState()
+
+            SwipeToDismissBox(
+                state = dismissState,
+                backgroundContent = {
+                    // Sol taraf için arka plan
+                    Card(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = "Delete",
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                },
+                enableDismissFromEndToStart = false,
+                modifier = Modifier.fillMaxWidth(),
+                content = {
+                    // Öğe içeriği
+                    Card(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = item,
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            )
+
+            // Eğer öğe tamamen kaydırılırsa, onItemDismiss işlevini çağır
+            if (dismissState.progress > 0.9f) {
+                onItemDismiss(item)
+            }
+        }
     }
 }
 
@@ -237,6 +482,41 @@ fun SingleRowItem(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ListItemCard(
+    listName: String,
+    onClick: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.List,
+                contentDescription = "List Icon",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = listName,
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

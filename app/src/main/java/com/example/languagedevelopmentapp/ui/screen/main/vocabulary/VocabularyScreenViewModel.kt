@@ -1,6 +1,9 @@
 package com.example.languagedevelopmentapp.ui.screen.main.vocabulary
 
+import android.app.Application
 import android.util.Log
+import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
@@ -9,12 +12,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
 class VocabularyScreenViewModel @Inject constructor(
-
-) : ViewModel() {
+    private val application: Application
+) : AndroidViewModel(application) {
 
     private val firestore = Firebase.firestore
     private val reference = firestore.collection("Words")
@@ -24,6 +28,7 @@ class VocabularyScreenViewModel @Inject constructor(
 
     init {
         getWords()
+        getLists()
     }
 
     fun getWords() {
@@ -50,6 +55,49 @@ class VocabularyScreenViewModel @Inject constructor(
                     _wordListState.value.copy(wordList = updatedList, synonyms = updatedSynonyms)
             }.addOnFailureListener { exception ->
                 Log.d("fail", exception.message.toString())
+            }
+        }
+    }
+
+     fun getLists() {
+        viewModelScope.launch {
+            try {
+                val result = firestore.collection("Lists").get().await()
+                val listNames = result.documents.mapNotNull { it.getString("name") }
+                _wordListState.value = _wordListState.value.copy(listNames = listNames)
+            } catch (e: Exception) {
+                // Handle exception
+            }
+        }
+    }
+
+    fun onCreateList(listName: String) {
+        viewModelScope.launch {
+            Log.d("listName",listName)
+            val listData = hashMapOf(
+                "name" to listName,
+                "createdAt" to System.currentTimeMillis()
+            )
+            firestore.collection("Lists").document(listName)
+                .set(listData)
+                .addOnSuccessListener {
+                    Toast.makeText(application.applicationContext,"Created $listName!",Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(application.applicationContext,it.message,Toast.LENGTH_LONG).show()
+                }
+        }
+    }
+
+    fun deleteList(listName: String) {
+        viewModelScope.launch {
+            try {
+                firestore.collection("Lists").document(listName).delete().await()
+                val updatedListNames = _wordListState.value.listNames.toMutableList()
+                updatedListNames.remove(listName)
+                _wordListState.value = _wordListState.value.copy(listNames = updatedListNames)
+            } catch (e: Exception) {
+                // Handle exception
             }
         }
     }
