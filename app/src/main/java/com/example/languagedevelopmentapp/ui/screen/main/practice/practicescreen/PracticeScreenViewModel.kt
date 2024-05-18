@@ -65,7 +65,7 @@ class PracticeScreenViewModel @Inject constructor(
                     viewModelScope.launch {
                         Log.d("words",words.toString())
                         val synonymsPrompt =
-                            "Write a english quiz with $testName of $words, user should learn $testName of $words. Make up questions like example usage in sentences or paragraphs, 11 questions,only questions and 4 options per each"
+                            "I want to learn $testName of $words, so find out $testName's for each of $words and prepare an quiz with them, 11 questions,only questions and 4 options per each"
                         val prompt =
                             "Write a english level determination quiz, 11 questions,only questions and 4 options per each"
                         val response = generativeModel.generateContent(synonymsPrompt)
