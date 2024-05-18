@@ -1,6 +1,9 @@
 package com.example.languagedevelopmentapp.ui.screen.main.vocabulary
 
-import android.graphics.drawable.GradientDrawable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +22,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Star
@@ -31,8 +35,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -133,7 +138,8 @@ fun VocabularyScreen(
                             shape = RoundedCornerShape(5.dp)
                         ),
                     wordListState = wordListState,
-                    onCreateList = viewModel::onCreateList
+                    onCreateList = viewModel::onCreateList,
+                    onDeleteListItem = viewModel::deleteList
                 )
             }
         }
@@ -169,11 +175,13 @@ fun VocabularyScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListsScreen(
     modifier: Modifier = Modifier,
     wordListState: VocabularyUiModel,
-    onCreateList: (String) -> Unit
+    onCreateList: (String) -> Unit,
+    onDeleteListItem: (String) -> Unit
 ) {
     var searchText by remember {
         mutableStateOf("")
@@ -182,6 +190,7 @@ fun ListsScreen(
 
     var showDialog by remember { mutableStateOf(false) }
     var listName by remember { mutableStateOf(TextFieldValue("")) }
+    val swipeToDismissState = rememberSwipeToDismissBoxState()
     Box(
         modifier = modifier
     ) {
@@ -244,106 +253,63 @@ fun ListsScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                items(wordListState.listNames){ name ->
-                    ListItemCard(
-                        listName = name,
-                        onClick = {
-                            // Handle list item click
-                        }
-                    )
-            }
-
-        }
-    }
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                showDialog = false
-            },
-            title = {
-                Text(text = "Create New List")
-            },
-            text = {
-                Column {
-                    Text(text = "Enter list name:")
-                    TextField(
-                        value = listName,
-                        onValueChange = { listName = it },
-                        placeholder = { Text("List Name") }
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onCreateList(listName.text)
-                        showDialog = false
-                    }
-                ) {
-                    Text("Create")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-
-                        showDialog = false
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-}
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SwipeToDeleteItem(
-    items: List<String>,
-    onItemDismiss: (String) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        items(items) { item ->
-            val dismissState = rememberSwipeToDismissBoxState()
-
-            SwipeToDismissBox(
-                state = dismissState,
-                backgroundContent = {
-                    // Sol taraf için arka plan
-                    Card(
-                        modifier = Modifier.fillMaxSize()
+                items(
+                    items =  wordListState.listNames,
+                    key = {it}
+                ) { name ->
+                    SwipeToDeleteContainer(
+                        item = name,
+                        onDelete = onDeleteListItem
                     ) {
-                        Text(
-                            text = "Delete",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        ListItemCard(
+                            listName = name,
+                            onClick = {
+                                // Handle list item click
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDialog = false
+                },
+                title = {
+                    Text(text = "Create New List")
+                },
+                text = {
+                    Column {
+                        Text(text = "Enter list name:")
+                        TextField(
+                            value = listName,
+                            onValueChange = { listName = it },
+                            placeholder = { Text("List Name") }
                         )
                     }
                 },
-                enableDismissFromEndToStart = false,
-                modifier = Modifier.fillMaxWidth(),
-                content = {
-                    // Öğe içeriği
-                    Card(
-                        modifier = Modifier.fillMaxSize()
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            onCreateList(listName.text)
+                            showDialog = false
+                        }
                     ) {
-                        Text(
-                            text = item,
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                        Text("Create")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+
+                            showDialog = false
+                        }
+                    ) {
+                        Text("Cancel")
                     }
                 }
             )
-
-            // Eğer öğe tamamen kaydırılırsa, onItemDismiss işlevini çağır
-            if (dismissState.progress > 0.9f) {
-                onItemDismiss(item)
-            }
         }
     }
 }
@@ -486,11 +452,81 @@ fun SingleRowItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> SwipeToDeleteContainer(
+    item: T,
+    onDelete: (T) -> Unit,
+    animationDuration: Int = 500,
+    content: @Composable (T) -> Unit
+) {
+    var isRemoved by remember {
+        mutableStateOf(false)
+    }
+    val state = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                isRemoved = true
+                true
+            } else {
+                false
+            }
+        }
+    )
+    LaunchedEffect(key1 = isRemoved) {
+        if (isRemoved) {
+            delay(animationDuration.toLong())
+            onDelete(item)
+        }
+    }
+    AnimatedVisibility(
+        visible = !isRemoved,
+        exit = shrinkVertically(
+            animationSpec = tween(durationMillis = animationDuration),
+            shrinkTowards = Alignment.Top
+        ) + fadeOut()
+    ) {
+        SwipeToDismissBox(
+            state = state,
+            backgroundContent = {
+                DeleteBackground(swipeDismissState = state)
+            },
+            content = { content(item) },
+            enableDismissFromEndToStart = true
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeleteBackground(swipeDismissState: SwipeToDismissBoxState) {
+    val color = if (swipeDismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+        Color.Red
+    } else Color.Transparent
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .background(color, shape = RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = "Delete Icon",
+            tint = Color.White
+        )
+
+    }
+}
+
+
 @Composable
 fun ListItemCard(
     listName: String,
-    onClick: () -> Unit
-) {
+    onClick: () -> Unit,
+
+    ) {
     Card(
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
@@ -505,7 +541,7 @@ fun ListItemCard(
                 .fillMaxWidth()
         ) {
             Icon(
-                imageVector = Icons.Default.List,
+                imageVector = Icons.AutoMirrored.Filled.List,
                 contentDescription = "List Icon",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
