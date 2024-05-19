@@ -10,6 +10,7 @@ import com.example.languagedevelopmentapp.BuildConfig
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeUiModel
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,8 +34,8 @@ class ReadingScreenViewModel @Inject constructor(
         modelName = "gemini-pro",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
-    private val _words = MutableStateFlow(PrePracticeUiModel())
-    val words = _words.asStateFlow()
+    private val _prePracticeModel = MutableStateFlow(PrePracticeUiModel())
+    val prePracticeModel = _prePracticeModel.asStateFlow()
 
     private val _selectedWord = MutableStateFlow("")
     val selectedWord: StateFlow<String> = _selectedWord
@@ -57,9 +59,9 @@ class ReadingScreenViewModel @Inject constructor(
                         wordList.add(word)
                         wordStringBuilder.append("$word, ")
                     }
-                    _words.value = _words.value.copy(readingTextWordsList = wordList)
+                    _prePracticeModel.value = _prePracticeModel.value.copy(readingTextWordsList = wordList)
                     val wordString = wordStringBuilder.toString().trimEnd { it == ',' }
-                    _words.value = _words.value.copy(readingTextWords = wordString)
+                    _prePracticeModel.value = _prePracticeModel.value.copy(readingTextWords = wordString)
                     readingExercise(wordString)
 
                 }
@@ -78,7 +80,20 @@ class ReadingScreenViewModel @Inject constructor(
             val translatePrompt = "translate ${response.text.toString()} to turkish"
             val translateResponse = generativeModel.generateContent(translatePrompt)
             Log.d("translate",translateResponse.text.toString())
-            _words.value = _words.value.copy(readingText = response.text.toString(), translatedReadingText = translateResponse.text.toString())
+            _prePracticeModel.value = _prePracticeModel.value.copy(readingText = response.text.toString(), translatedReadingText = translateResponse.text.toString())
+        }
+    }
+
+    fun getLists() {
+        viewModelScope.launch {
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val snapshot = db.collection("Lists").get().await()
+                val names = snapshot.documents.map { it.id }
+                _prePracticeModel.value = _prePracticeModel.value.copy(readingScreenLists = names)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -115,7 +130,7 @@ class ReadingScreenViewModel @Inject constructor(
                     if (word.isNotEmpty()) {
                         englishTurkishTranslator.translate(word)
                             .addOnSuccessListener {
-                                _words.value = _words.value.copy(translatedSelectedText = it)
+                                _prePracticeModel.value = _prePracticeModel.value.copy(translatedSelectedText = it)
 
                             }
                     }
@@ -123,6 +138,6 @@ class ReadingScreenViewModel @Inject constructor(
         }
     }
     fun clearState() {
-        _words.value = _words.value.copy(translatedSelectedText = "")
+        _prePracticeModel.value = _prePracticeModel.value.copy(translatedSelectedText = "")
     }
 }
