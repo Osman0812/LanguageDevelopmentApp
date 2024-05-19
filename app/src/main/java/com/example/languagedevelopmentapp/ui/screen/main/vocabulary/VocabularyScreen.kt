@@ -15,22 +15,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,9 +57,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
+import com.example.languagedevelopmentapp.ui.component.ListItemCard
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import kotlinx.coroutines.delay
@@ -254,14 +249,17 @@ fun ListsScreen(
                     .fillMaxSize()
             ) {
                 items(
-                    items =  wordListState.listNames,
-                    key = {it}
+                    items = wordListState.listNames,
+                    key = { it }
                 ) { name ->
                     SwipeToDeleteContainer(
                         item = name,
                         onDelete = onDeleteListItem
                     ) {
                         ListItemCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
                             listName = name,
                             onClick = {
                                 // Handle list item click
@@ -521,39 +519,5 @@ fun DeleteBackground(swipeDismissState: SwipeToDismissBoxState) {
 }
 
 
-@Composable
-fun ListItemCard(
-    listName: String,
-    onClick: () -> Unit,
 
-    ) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() }
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.List,
-                contentDescription = "List Icon",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = listName,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
 

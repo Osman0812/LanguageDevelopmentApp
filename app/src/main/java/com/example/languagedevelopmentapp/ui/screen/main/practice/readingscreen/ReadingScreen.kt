@@ -2,13 +2,13 @@ package com.example.languagedevelopmentapp.ui.screen.main.practice.readingscreen
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,9 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -42,13 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.getSelectedText
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.languagedevelopmentapp.ui.component.ListItemCard
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeUiModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -68,7 +67,7 @@ fun ReadingScreen(
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
             }
-        ) {padding ->
+        ) { padding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -77,7 +76,8 @@ fun ReadingScreen(
                 TextProcessing(
                     uiModel = prePracticeModel,
                     onTranslate = viewModel::translateModel,
-                    snackbarHostState = snackbarHostState
+                    snackbarHostState = snackbarHostState,
+                    onAddWordToList = viewModel::addWordToList
                 )
             }
         }
@@ -99,7 +99,8 @@ fun TextProcessing(
     modifier: Modifier = Modifier,
     uiModel: PrePracticeUiModel,
     onTranslate: (String) -> Unit,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    onAddWordToList: (String, String) -> Unit
 ) {
     var textInput by remember { mutableStateOf(TextFieldValue(uiModel.readingText)) }
     var popupPosition by remember { mutableStateOf(Offset.Zero) }
@@ -142,7 +143,8 @@ fun TextProcessing(
                             LaunchedEffect(key1 = interactionSource) {
                                 interactionSource.interactions.collect {
                                     if (it is PressInteraction.Press) {
-                                        popupPosition = Offset(it.pressPosition.x, it.pressPosition.y)
+                                        popupPosition =
+                                            Offset(it.pressPosition.x, it.pressPosition.y)
                                         selectedText.value = selectedText2
                                     }
                                 }
@@ -165,7 +167,10 @@ fun TextProcessing(
                         text = uiModel.translatedSelectedText,
                         modifier = Modifier
                             .offset {
-                                IntOffset(popupPosition.x.roundToInt(), popupPosition.y.roundToInt())
+                                IntOffset(
+                                    popupPosition.x.roundToInt(),
+                                    popupPosition.y.roundToInt()
+                                )
                             }
                             .background(
                                 shape = RoundedCornerShape(5.dp),
@@ -197,7 +202,7 @@ fun TextProcessing(
                         showDialog = { showDialog = false },
                         listItems = uiModel.readingScreenLists,
                         onItemSelected = { selectedList ->
-                            //addWordToList(selectedList, selectedWord.value)
+                            onAddWordToList(selectedList, selectedText.value)
                             showDialog = false
                         }
                     )
@@ -223,32 +228,63 @@ fun ListDialog(
     listItems: List<String>,
     onItemSelected: (String) -> Unit
 ) {
+    var isListSelected by remember {
+        mutableStateOf(false)
+    }
+    var listItem by remember {
+        mutableStateOf("")
+    }
+    var selectedItemIndex by remember {
+        mutableStateOf(-1)
+    }
     Dialog(onDismissRequest = { showDialog() }) {
         Box(
             modifier = Modifier
-                .background(Color.White)
+                .background(Color.White, shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
             Column {
                 Text(text = "Select a list")
                 LazyColumn {
-                    items(listItems) { listItem ->
-                        Text(
-                            text = listItem,
+                    itemsIndexed(listItems) { index, listName ->
+                        ListItemCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    onItemSelected(listItem)
-                                }
-                                .padding(8.dp)
+                                .padding(8.dp),
+                            listName = listName,
+                            onClick = {
+                                selectedItemIndex = index
+                            },
+                            isSelected = index == selectedItemIndex
                         )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { showDialog() }) {
-                    Text(text = "Cancel")
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            if (selectedItemIndex != -1) {
+                                onItemSelected(listItems[selectedItemIndex])
+                                showDialog()
+                            }
+                        }
+                    ) {
+                        Text(text = "Add")
+                    }
+                    Button(
+                        onClick = {
+                            showDialog()
+                        }
+                    ) {
+                        Text(text = "Cancel")
+                    }
                 }
+
             }
         }
     }

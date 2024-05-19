@@ -43,6 +43,8 @@ class ReadingScreenViewModel @Inject constructor(
     val modelManager = RemoteModelManager.getInstance()
     val wordList = mutableListOf<String>()
 
+    private val firestore = FirebaseFirestore.getInstance()
+
     init {
         getWords()
     }
@@ -134,6 +136,23 @@ class ReadingScreenViewModel @Inject constructor(
 
                             }
                     }
+                }
+        }
+    }
+
+    fun addWordToList(listId: String, word: String) {
+        viewModelScope.launch {
+            val wordData = hashMapOf(
+                "word" to word,
+                "addedAt" to System.currentTimeMillis()
+            )
+            firestore.collection("Lists").document(listId).collection("words")
+                .add(wordData)
+                .addOnSuccessListener { documentReference ->
+                    Toast.makeText(application.applicationContext,"$word added to $listId!", Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(application.applicationContext,e.message.toString(), Toast.LENGTH_LONG).show()
                 }
         }
     }
