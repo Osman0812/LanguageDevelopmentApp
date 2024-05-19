@@ -5,5 +5,6 @@ data class PrePracticeUiModel(
     val readingTextWordsList: List<String> = emptyList(),
     val readingText: String = "",
     val translatedReadingText: String = "",
-    val translatedSelectedText: String = ""
+    val translatedSelectedText: String = "",
+    val readingScreenLists: List<String> = emptyList(),
 )
