@@ -3,7 +3,6 @@ package com.example.languagedevelopmentapp.ui.screen.main.practice.readingscreen
 import android.app.Application
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.BuildConfig
@@ -20,7 +19,6 @@ import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.TranslatorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -37,8 +35,6 @@ class ReadingScreenViewModel @Inject constructor(
     private val _prePracticeModel = MutableStateFlow(PrePracticeUiModel())
     val prePracticeModel = _prePracticeModel.asStateFlow()
 
-    private val _selectedWord = MutableStateFlow("")
-    val selectedWord: StateFlow<String> = _selectedWord
 
     val modelManager = RemoteModelManager.getInstance()
     val wordList = mutableListOf<String>()
@@ -61,9 +57,11 @@ class ReadingScreenViewModel @Inject constructor(
                         wordList.add(word)
                         wordStringBuilder.append("$word, ")
                     }
-                    _prePracticeModel.value = _prePracticeModel.value.copy(readingTextWordsList = wordList)
+                    _prePracticeModel.value =
+                        _prePracticeModel.value.copy(readingTextWordsList = wordList)
                     val wordString = wordStringBuilder.toString().trimEnd { it == ',' }
-                    _prePracticeModel.value = _prePracticeModel.value.copy(readingTextWords = wordString)
+                    _prePracticeModel.value =
+                        _prePracticeModel.value.copy(readingTextWords = wordString)
                     readingExercise(wordString)
 
                 }
@@ -76,13 +74,16 @@ class ReadingScreenViewModel @Inject constructor(
 
     private fun readingExercise(words: String) {
         viewModelScope.launch {
-            Log.d("words",words)
+            Log.d("words", words)
             val prompt = "İ want to learn better these words:$words. Write a paragraph for me."
             val response = generativeModel.generateContent(prompt)
             val translatePrompt = "translate ${response.text.toString()} to turkish"
             val translateResponse = generativeModel.generateContent(translatePrompt)
-            Log.d("translate",translateResponse.text.toString())
-            _prePracticeModel.value = _prePracticeModel.value.copy(readingText = response.text.toString(), translatedReadingText = translateResponse.text.toString())
+            Log.d("translate", translateResponse.text.toString())
+            _prePracticeModel.value = _prePracticeModel.value.copy(
+                readingText = response.text.toString(),
+                translatedReadingText = translateResponse.text.toString()
+            )
         }
     }
 
@@ -96,21 +97,6 @@ class ReadingScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
-
-    fun processText(text: String) {
-        viewModelScope.launch {
-            val splitText = text.split(" ")
-            val annotatedString = buildAnnotatedString {
-                splitText.forEachIndexed { index, word ->
-                    if (index > 0) {
-                        append(" ")
-                    }
-                    append(word)
-                }
-            }
-            _selectedWord.value = annotatedString.toString()
         }
     }
 
@@ -128,15 +114,22 @@ class ReadingScreenViewModel @Inject constructor(
                 .build()
             modelManager.download(turkishModel, conditions)
                 .addOnSuccessListener {
-                    Log.d("translated","asda")
+                    Log.d("translated", "asda")
                     if (word.isNotEmpty()) {
                         englishTurkishTranslator.translate(word)
                             .addOnSuccessListener {
-                                _prePracticeModel.value = _prePracticeModel.value.copy(translatedSelectedText = it)
-
+                                _prePracticeModel.value =
+                                    _prePracticeModel.value.copy(translatedSelectedText = it)
                             }
                     }
                 }
+        }
+    }
+
+    fun saveWordToWords(word: String) {
+        viewModelScope.launch {
+            val map = hashMapOf<String, Any>()
+            map["word"] = word
         }
     }
 
@@ -146,16 +139,25 @@ class ReadingScreenViewModel @Inject constructor(
                 "word" to word,
                 "addedAt" to System.currentTimeMillis()
             )
-            firestore.collection("Lists").document(listId).collection("words")
-                .add(wordData)
+            firestore.collection("Lists").document(listId).collection("words").document(word)
+                .set(wordData)
                 .addOnSuccessListener { documentReference ->
-                    Toast.makeText(application.applicationContext,"$word added to $listId!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        application.applicationContext,
+                        "$word added to $listId!",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 .addOnFailureListener { e ->
-                    Toast.makeText(application.applicationContext,e.message.toString(), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        application.applicationContext,
+                        e.message.toString(),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
         }
     }
+
     fun clearState() {
         _prePracticeModel.value = _prePracticeModel.value.copy(translatedSelectedText = "")
     }

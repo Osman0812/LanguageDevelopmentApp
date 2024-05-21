@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.example.languagedevelopmentapp.navigation.BottomBarScreen
 import com.example.languagedevelopmentapp.navigation.Screens
 import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreen
+import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreenViewModel
 import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreen
 import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreenViewModel
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeScreen
@@ -19,7 +20,8 @@ import com.example.languagedevelopmentapp.ui.screen.resultscreen.ResultScreen
 @Composable
 fun MainNavGraph(
     navController: NavHostController,
-    viewModel: PracticeScreenViewModel = hiltViewModel()
+    viewModel: PracticeScreenViewModel = hiltViewModel(),
+    homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     NavHost(
         navController = navController,
@@ -56,7 +58,9 @@ fun MainNavGraph(
         }
         authNavGraph(navController = navController)
         composable(route = Screens.ReadingScreen.route) {
-            ReadingScreen()
+            ReadingScreen(
+                homeScreenViewModel = homeScreenViewModel
+            )
         }
         composable(route = Screens.ResultScreen.route) {
             ResultScreen(

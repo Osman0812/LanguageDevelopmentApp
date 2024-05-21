@@ -7,12 +7,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
+import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.common.model.RemoteModelManager
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.TranslateRemoteModel
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.TranslatorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -25,40 +29,35 @@ class HomeScreenViewModel @Inject constructor(
 
     private var _wordState = MutableStateFlow(HomeScreenUiModel())
     var wordState = _wordState.asStateFlow()
+
+    val modelManager = RemoteModelManager.getInstance()
     private val generativeModel = GenerativeModel(
         modelName = "gemini-pro",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
-    /*
-        fun translate(word: String) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val prompt = "$word anlam ını ve $word dilindeki kelimenin esAnlam larını gsonstring olarak döndür."
-                val response = generativeModel.generateContent(content {
-                    text(prompt)
-                })
-                Log.d("json", response.text.toString())
-                val data = response.text?.trim()?.removePrefix("```json")?.removeSuffix("```")
-                Log.d("data", data.toString())
-                val gson = Gson()
-                val jsonData = gson.fromJson(data, Map::class.java)
 
-                _wordState.value = _wordState.value.copy(
-                    word = jsonData["kelime"].toString(),
-                    translate = jsonData["anlam"].toString()
-                )
-            }
-        }
+    fun translateModel(word: String = "") {
+        viewModelScope.launch {
+            val options = TranslatorOptions.Builder()
+                .setSourceLanguage(TranslateLanguage.ENGLISH)
+                .setTargetLanguage(TranslateLanguage.TURKISH)
+                .build()
+            val englishTurkishTranslator = Translation.getClient(options)
 
-     */
-
-
-    fun translate(word: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val prompt = "Write with one word the meaning of $word in turkish."
-            val response = generativeModel.generateContent(content {
-                text(prompt)
-            })
-            _wordState.value = _wordState.value.copy(word = word, translate = response.text ?: "")
+            val turkishModel = TranslateRemoteModel.Builder(TranslateLanguage.TURKISH).build()
+            val conditions = DownloadConditions.Builder()
+                .requireWifi()
+                .build()
+            modelManager.download(turkishModel, conditions)
+                .addOnSuccessListener {
+                    if (word.isNotEmpty()) {
+                        englishTurkishTranslator.translate(word)
+                            .addOnSuccessListener {
+                                _wordState.value =
+                                    _wordState.value.copy(translate = it, word = word)
+                            }
+                    }
+                }
         }
     }
 
@@ -88,65 +87,69 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun saveToFirebase(wordState: HomeScreenUiModel, zipList: List<Pair<String, String>>) {
-        _wordState.value = _wordState.value.copy(wordZip = zipList)
-        val map = hashMapOf<String, Any>()
-        map["word"] = wordState.word
-        map["translate"] = wordState.translate
-        map["synonyms"] = zipList
-        map["date"] = Timestamp.now()
-        val firestore = Firebase.firestore
-        val reference = firestore.collection("Words").document(wordState.word)
-        reference.get()
-            .addOnSuccessListener { docSnap ->
-                if (docSnap.exists()) {
-                    reference.addSnapshotListener { value, _ ->
-                        if (value != null && value.exists()) {
-                            Toast.makeText(
-                                application.applicationContext,
-                                "You already saved \"${wordState.word}\"",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                application.applicationContext,
-                                "Updated \"${wordState.word}\"",
-                                Toast.LENGTH_LONG
-                            ).show()
-                            reference.set(map)
-                                .addOnSuccessListener {
-                                    Toast.makeText(
-                                        application.applicationContext,
-                                        "${wordState.word} saved!",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                                .addOnFailureListener {
-                                    Toast.makeText(
-                                        application.applicationContext,
-                                        it.message,
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
+        viewModelScope.launch {
+            _wordState.value = _wordState.value.copy(wordZip = zipList)
+            val map = hashMapOf<String, Any>()
+            map["word"] = wordState.word
+            map["translate"] = wordState.translate
+            map["synonyms"] = zipList
+            map["date"] = Timestamp.now()
+            val firestore = Firebase.firestore
+            Log.d("wordState", wordState.word)
+            val reference = firestore.collection("Words").document(wordState.word)
+            reference.get()
+                .addOnSuccessListener { docSnap ->
+                    if (docSnap.exists()) {
+                        reference.addSnapshotListener { value, _ ->
+                            if (value != null && value.exists()) {
+                                Toast.makeText(
+                                    application.applicationContext,
+                                    "You already saved \"${wordState.word}\"",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    application.applicationContext,
+                                    "Updated \"${wordState.word}\"",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                reference.set(map)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(
+                                            application.applicationContext,
+                                            "${wordState.word} saved!",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                    .addOnFailureListener {
+                                        Toast.makeText(
+                                            application.applicationContext,
+                                            it.message,
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                            }
                         }
+                    } else {
+                        reference.set(map)
+                            .addOnSuccessListener {
+                                Toast.makeText(
+                                    application.applicationContext,
+                                    "\"${wordState.word}\" saved!",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(
+                                    application.applicationContext,
+                                    it.message,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                     }
-                } else {
-                    reference.set(map)
-                        .addOnSuccessListener {
-                            Toast.makeText(
-                                application.applicationContext,
-                                "\"${wordState.word}\" saved!",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(
-                                application.applicationContext,
-                                it.message,
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
                 }
-            }
+        }
+
     }
 
     fun wordExamples(word: String) {
