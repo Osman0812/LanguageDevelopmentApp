@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.getSelectedText
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
+import com.example.languagedevelopmentapp.ui.component.CustomButton
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 
 @Composable
@@ -55,6 +56,9 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val wordState by viewModel.wordState.collectAsState()
+    var isReadOnly by remember {
+        mutableStateOf(true)
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -62,7 +66,19 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.primary
             )
     ) {
-        HomeScreenBody(
+        Text(
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(end = 10.dp)
+                .clickable(
+                    onClick = {
+                        isReadOnly = false
+                    }
+                ),
+            text = "Edit",
+            color = Color.White
+        )
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
@@ -70,14 +86,28 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(10.dp)
                 )
-                .weight(0.9f),
-            onTranslate = viewModel::translate,
-            wordUiState = wordState,
-            onOtherUsagesEnglish = viewModel::otherUsagesEnglish,
-            onClearState = viewModel::clearState,
-            onWordExample = viewModel::wordExamples,
-            onSaveToFirebase = viewModel::saveToFirebase
-        )
+                .weight(0.9f)
+        ) {
+            HomeScreenBody(
+                wordUiState = wordState,
+                onOtherUsagesEnglish = viewModel::otherUsagesEnglish,
+                onClearState = viewModel::clearState,
+                onWordExample = viewModel::wordExamples,
+                onSaveToFirebase = viewModel::saveToFirebase,
+                isReadOnly = isReadOnly,
+                onTranslateModel = viewModel::translateModel
+            )
+            if (!isReadOnly) {
+                CustomButton(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 15.dp),
+                    onClick = {
+                        isReadOnly = true
+                    }, text = "Cancel"
+                )
+            }
+        }
     }
 }
 
@@ -86,30 +116,24 @@ fun HomeScreen(
 @Composable
 fun HomeScreenBody(
     modifier: Modifier = Modifier,
-    onTranslate: (String) -> Unit,
+    onTranslateModel: (String) -> Unit,
     onOtherUsagesEnglish: (String) -> Unit,
     wordUiState: HomeScreenUiModel,
     onWordExample: (String) -> Unit,
     onClearState: () -> Unit,
-    onSaveToFirebase: (HomeScreenUiModel, List<Pair<String, String>>) -> Unit
+    onSaveToFirebase: (HomeScreenUiModel, List<Pair<String, String>>) -> Unit,
+    isReadOnly: Boolean
 ) {
-    var selectedWord by remember {
-        mutableStateOf("")
-    }
-    var isSelected by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
-    val text =
-        " In his recent book, Return of the Bison: A Story of Survival, Restoration, and a Wilder World, Roger Di Silvestro describes how bison are being repopulated through conservation on federal public lands at national parks and national wildlife refuges, focusing on Yellowstone National Park throughout the book. He implements a narrative that tracks singular people in history that contributed to the establishment of Yellowstone National Park as a wildlife refuge for bison. In particular, he describes the events that precipitated the era of “Big Conservation” at the turn of the 20th century with executive orders by President Theodore Roosevelt and the various Congressional Acts that protected wildlife."
     val selectedText = remember {
         mutableStateOf("")
     }
-    var textInput by remember { mutableStateOf(TextFieldValue(text)) }
+    var textInput by remember { mutableStateOf(TextFieldValue("Hello, welcome to my learning app!")) }
     var selectedText2 by remember {
         mutableStateOf("")
     }
-
     TextField(
         modifier = modifier,
         value = textInput,
@@ -118,11 +142,16 @@ fun HomeScreenBody(
             textInput.selection
             selectedText2 = textInput.getSelectedText().text
         },
-        readOnly = true,
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
+            unfocusedIndicatorColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent
         ),
+        placeholder = {
+            Text(text = "Hello, welcome to my learning app!")
+        },
+        readOnly = isReadOnly,
         interactionSource = remember {
             MutableInteractionSource()
         }
@@ -160,7 +189,7 @@ fun HomeScreenBody(
             )
         }
         LaunchedEffect(key1 = Unit) {
-            onTranslate(selectedText.value)
+            onTranslateModel(selectedText.value)
             onOtherUsagesEnglish(selectedText.value)
             onWordExample(selectedText.value)
         }
@@ -256,9 +285,11 @@ fun FooterBody(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "(${it.second.filter { 
-                                    it.isLetter() || it == ' '
-                                }})",
+                                text = "(${
+                                    it.second.filter {
+                                        it.isLetter() || it == ' '
+                                    }
+                                })",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

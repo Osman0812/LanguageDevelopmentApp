@@ -34,7 +34,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,17 +47,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.ui.component.ListItemCard
+import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreenUiModel
+import com.example.languagedevelopmentapp.ui.screen.main.home.HomeScreenViewModel
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeUiModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 @Composable
 fun ReadingScreen(
-    viewModel: ReadingScreenViewModel = hiltViewModel()
+    viewModel: ReadingScreenViewModel = hiltViewModel(),
+    homeScreenViewModel: HomeScreenViewModel
 ) {
+    val wordState by homeScreenViewModel.wordState.collectAsState()
     val prePracticeModel = viewModel.prePracticeModel.collectAsState().value
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         viewModel.getLists()
     }
@@ -75,9 +77,12 @@ fun ReadingScreen(
             ) {
                 TextProcessing(
                     uiModel = prePracticeModel,
-                    onTranslate = viewModel::translateModel,
+                    onTranslate = homeScreenViewModel::translateModel,
                     snackbarHostState = snackbarHostState,
-                    onAddWordToList = viewModel::addWordToList
+                    onAddWordToList = viewModel::addWordToList,
+                    onSaveWordToWords = homeScreenViewModel::otherUsagesEnglish,
+                    wordUiState = wordState,
+                    onSaveToFirebase = homeScreenViewModel::saveToFirebase
                 )
             }
         }
@@ -100,8 +105,12 @@ fun TextProcessing(
     uiModel: PrePracticeUiModel,
     onTranslate: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
-    onAddWordToList: (String, String) -> Unit
+    onAddWordToList: (String, String) -> Unit,
+    onSaveWordToWords: (String) -> Unit,
+    wordUiState: HomeScreenUiModel,
+    onSaveToFirebase: (HomeScreenUiModel, List<Pair<String, String>>) -> Unit
 ) {
+    val list = wordUiState.otherUsagesEnglish?.zip(wordUiState.otherUsagesTurkish)
     var textInput by remember { mutableStateOf(TextFieldValue(uiModel.readingText)) }
     var popupPosition by remember { mutableStateOf(Offset.Zero) }
     var selectedText2 by remember {
@@ -164,7 +173,7 @@ fun TextProcessing(
                 if (translate) {
                     Log.d("translated", uiModel.translatedSelectedText)
                     Text(
-                        text = uiModel.translatedSelectedText,
+                        text = wordUiState.translate,
                         modifier = Modifier
                             .offset {
                                 IntOffset(
@@ -203,6 +212,7 @@ fun TextProcessing(
                         listItems = uiModel.readingScreenLists,
                         onItemSelected = { selectedList ->
                             onAddWordToList(selectedList, selectedText.value)
+                            onSaveWordToWords(selectedText.value)
                             showDialog = false
                         }
                     )
@@ -218,6 +228,13 @@ fun TextProcessing(
                 )
                 Text(text = uiModel.translatedReadingText)
             }
+        }
+    }
+    LaunchedEffect(key1 = list) {
+        if (!list.isNullOrEmpty()) {
+            Log.d("wordState",wordUiState.word)
+            Log.d("list",list.toString())
+            onSaveToFirebase(wordUiState, list)
         }
     }
 }
