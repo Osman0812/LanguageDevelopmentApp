@@ -37,7 +37,6 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
                         navigate(Graph.MAIN)
                     }
                 }
-
             )
         }
     }

@@ -50,8 +50,11 @@ fun MainNavGraph(
             VocabularyScreen()
         }
         composable(route = BottomBarScreen.Profile.route) {
-            ProfileScreen()
+            ProfileScreen(
+                navController = navController
+            )
         }
+        authNavGraph(navController = navController)
         composable(route = Screens.ReadingScreen.route) {
             ReadingScreen()
         }

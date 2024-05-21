@@ -3,6 +3,7 @@ package com.example.languagedevelopmentapp.ui.screen.main.profile
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,17 +29,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.example.languagedevelopmentapp.R
-import com.example.languagedevelopmentapp.ui.screen.main.practice.practicescreen.PracticeScreenViewModel
+import com.example.languagedevelopmentapp.navigation.graphs.Graph
 import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ProfileScreen(
     viewModel: ProfileScreenViewModel = hiltViewModel(),
+    navController: NavHostController
 ) {
     val scrollState = rememberScrollState()
     val profileState by viewModel.profileState.collectAsState()
@@ -51,30 +53,48 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(state = scrollState)
+            .verticalScroll(state = scrollState),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Avatar(
+        Column {
+            Avatar(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ScreenDimensions.screenHeight * 0.3f)
+            )
+            PersonalInfo(
+                modifier = Modifier
+                    .padding(10.dp),
+                profileState = profileState
+            )
+            ProgressInfo(
+                modifier = Modifier
+                    .padding(10.dp),
+                profileState = profileState
+            )
+            WinningsPart(
+                modifier = Modifier
+                    .padding(10.dp),
+                profileState = profileState
+            )
+        }
+
+        Text(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(ScreenDimensions.screenHeight * 0.3f)
-        )
-        PersonalInfo(
-            modifier = Modifier
-                .padding(10.dp),
-            profileState = profileState
-        )
-        ProgressInfo(
-            modifier = Modifier
-                .padding(10.dp),
-            profileState = profileState
-        )
-        WinningsPart(
-            modifier = Modifier
-                .padding(10.dp),
-            profileState = profileState
+                .padding(bottom = 25.dp)
+                .align(Alignment.CenterHorizontally)
+                .clickable(
+                    onClick = {
+                        navController.apply {
+                            popBackStack()
+                            navigate(Graph.AUTH)
+                        }
+                    }
+                ),
+            text = "Log out",
+            color = MaterialTheme.colorScheme.primary
         )
     }
-
 }
 
 @Composable
@@ -193,8 +213,3 @@ fun WinningsPart(
     }
 }
 
-@Preview
-@Composable
-fun ProfileScreenPreview() {
-    ProfileScreen()
-}

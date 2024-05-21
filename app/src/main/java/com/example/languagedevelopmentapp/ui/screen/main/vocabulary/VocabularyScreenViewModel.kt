@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -59,7 +58,7 @@ class VocabularyScreenViewModel @Inject constructor(
         }
     }
 
-     fun getLists() {
+    fun getLists() {
         viewModelScope.launch {
             try {
                 val result = firestore.collection("Lists").get().await()
@@ -71,9 +70,30 @@ class VocabularyScreenViewModel @Inject constructor(
         }
     }
 
+    fun getWordsOfList(listName: String) {
+        viewModelScope.launch {
+            try {
+                firestore.collection("Lists").document(listName).collection("words").get()
+                    .addOnSuccessListener { result ->
+                        val words = result.documents.map { it.id }
+                        val updatedWordList = _wordListState.value.wordsOfList.toMutableList()
+                        updatedWordList.addAll(words)
+                        _wordListState.value =
+                            _wordListState.value.copy(wordsOfList = updatedWordList)
+                    }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    application.applicationContext,
+                    e.message.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
     fun onCreateList(listName: String) {
         viewModelScope.launch {
-            Log.d("listName",listName)
+            Log.d("listName", listName)
             val listData = hashMapOf(
                 "name" to listName,
                 "createdAt" to System.currentTimeMillis()
@@ -81,10 +101,15 @@ class VocabularyScreenViewModel @Inject constructor(
             firestore.collection("Lists").document(listName)
                 .set(listData)
                 .addOnSuccessListener {
-                    Toast.makeText(application.applicationContext,"Created $listName!",Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        application.applicationContext,
+                        "Created $listName!",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 .addOnFailureListener {
-                    Toast.makeText(application.applicationContext,it.message,Toast.LENGTH_LONG).show()
+                    Toast.makeText(application.applicationContext, it.message, Toast.LENGTH_LONG)
+                        .show()
                 }
         }
     }
@@ -100,5 +125,12 @@ class VocabularyScreenViewModel @Inject constructor(
                 // Handle exception
             }
         }
+    }
+
+    fun clearState() {
+        _wordListState.value =
+            _wordListState.value.copy(
+                wordsOfList = emptyList()
+            )
     }
 }

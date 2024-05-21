@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -51,15 +52,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.languagedevelopmentapp.R
 import com.example.languagedevelopmentapp.ui.component.ListItemCard
+import com.example.languagedevelopmentapp.ui.theme.ScreenDimensions
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import kotlinx.coroutines.delay
@@ -134,12 +138,12 @@ fun VocabularyScreen(
                         ),
                     wordListState = wordListState,
                     onCreateList = viewModel::onCreateList,
-                    onDeleteListItem = viewModel::deleteList
+                    onDeleteListItem = viewModel::deleteList,
+                    onGetWordsOfList = viewModel::getWordsOfList,
+                    onClearState = viewModel::clearState
                 )
             }
         }
-
-
     }
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(key1 = true) {
@@ -170,22 +174,26 @@ fun VocabularyScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListsScreen(
     modifier: Modifier = Modifier,
     wordListState: VocabularyUiModel,
     onCreateList: (String) -> Unit,
-    onDeleteListItem: (String) -> Unit
+    onDeleteListItem: (String) -> Unit,
+    onGetWordsOfList: (String) -> Unit,
+    onClearState: () -> Unit
 ) {
     var searchText by remember {
         mutableStateOf("")
     }
     val fieldBackgroundColor = MaterialTheme.colorScheme.inverseOnSurface
-
     var showDialog by remember { mutableStateOf(false) }
+    var selectedListName by remember { mutableStateOf<String?>(null) }
+    var isListItemSelected by remember {
+        mutableStateOf(false)
+    }
+
     var listName by remember { mutableStateOf(TextFieldValue("")) }
-    val swipeToDismissState = rememberSwipeToDismissBoxState()
     Box(
         modifier = modifier
     ) {
@@ -193,80 +201,133 @@ fun ListsScreen(
             modifier = Modifier
                 .padding(15.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "My Lists",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
+            if (!isListItemSelected){
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "My Lists",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Icon(
+                        modifier = Modifier
+                            .clickable(
+                                onClick = {
+                                    showDialog = true
+                                }
+                            ),
+                        imageVector = Icons.Outlined.Add,
+                        contentDescription = "Add Icon"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                TextField(
                     modifier = Modifier
-                        .clickable(
-                            onClick = {
-                                showDialog = true
-                            }
-                        ),
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "Add Icon"
+                        .fillMaxWidth(),
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    singleLine = true,
+                    shape = RoundedCornerShape(10.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = "TextField Search Icon"
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            modifier = Modifier,
+                            text = stringResource(id = R.string.search_list_field_placeholder),
+                            textAlign = TextAlign.Justify
+                        )
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = fieldBackgroundColor,
+                        unfocusedContainerColor = fieldBackgroundColor,
+                        disabledContainerColor = fieldBackgroundColor,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    )
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            TextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                value = searchText,
-                onValueChange = { searchText = it },
-                singleLine = true,
-                shape = RoundedCornerShape(10.dp),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Search,
-                        contentDescription = "TextField Search Icon"
-                    )
-                },
-                placeholder = {
-                    Text(
-                        modifier = Modifier,
-                        text = stringResource(id = R.string.search_list_field_placeholder),
-                        textAlign = TextAlign.Justify
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = fieldBackgroundColor,
-                    unfocusedContainerColor = fieldBackgroundColor,
-                    disabledContainerColor = fieldBackgroundColor,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
-            )
             Spacer(modifier = Modifier.height(10.dp))
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                items(
-                    items = wordListState.listNames,
-                    key = { it }
-                ) { name ->
-                    SwipeToDeleteContainer(
-                        item = name,
-                        onDelete = onDeleteListItem
-                    ) {
-                        ListItemCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            listName = name,
-                            onClick = {
-                                // Handle list item click
-                            }
+                if (!isListItemSelected){
+                    items(
+                        items = wordListState.listNames,
+                        key = { it }
+                    ) { name ->
+                        SwipeToDeleteContainer(
+                            item = name,
+                            onDelete = onDeleteListItem
+                        ) {
+                            ListItemCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                listName = name,
+                                onClick = {
+                                    selectedListName = name
+                                    isListItemSelected = true
+                                }
+                            )
+                        }
+                    }
+                }else {
+                    item {
+                        Text(
+                            text = selectedListName.toString(),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
+                    if (wordListState.wordsOfList.isEmpty()){
+                        item {
+                            Text(text = "List Is Empty...")
+                        }
+                    }else {
+                        items(wordListState.wordsOfList) {text ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp, horizontal = 8.dp)
+                                    .background(Color.White)
+                                    .shadow(2.dp, shape = RoundedCornerShape(8.dp))
+                            ) {
+                                Text(
+                                    text = text,
+                                    modifier = Modifier.padding(15.dp),
+                                    fontSize = 16.sp,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                    }
                 }
+            }
+        }
+        if (isListItemSelected) {
+            Button(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .width(ScreenDimensions.screenWidth * 0.5f)
+                    .padding(bottom = 5.dp),
+                onClick = { isListItemSelected = false }
+            ) {
+                Text("Geri")
+            }
+        }
+        LaunchedEffect(key1 = isListItemSelected) {
+            if (isListItemSelected) {
+                onClearState()
+                onGetWordsOfList(selectedListName.toString())
             }
         }
         if (showDialog) {
@@ -300,7 +361,6 @@ fun ListsScreen(
                 dismissButton = {
                     Button(
                         onClick = {
-
                             showDialog = false
                         }
                     ) {
@@ -517,6 +577,9 @@ fun DeleteBackground(swipeDismissState: SwipeToDismissBoxState) {
 
     }
 }
+
+
+
 
 
 
