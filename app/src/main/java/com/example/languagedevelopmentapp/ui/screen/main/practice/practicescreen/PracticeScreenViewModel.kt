@@ -53,7 +53,6 @@ class PracticeScreenViewModel @Inject constructor(
     }
 
     fun getQuestions(testName: String) {
-
             val words = mutableListOf<String>()
             wordsReference.get()
                 .addOnSuccessListener {result->
@@ -65,7 +64,13 @@ class PracticeScreenViewModel @Inject constructor(
                     viewModelScope.launch {
                         Log.d("words",words.toString())
                         val synonymsPrompt =
-                            "I want to learn $testName of $words, so find out $testName's for each of $words and prepare an quiz with them, 11 questions,only questions and 4 options per each"
+                            "I want to learn $testName of $words,prepare quiz, 11 questions,only questions and 4 options per each. You may ask with sentences like usage in sentences with examples." +
+                                    "Example format:" +
+                                    "Question 5: The _________ of nature is a delicate balance that must be preserved.\n" +
+                                    "(A)  order\n" +
+                                    "(B)  harmony\n" +
+                                    "(C)  equilibrium\n" +
+                                    "(D)  stability"
                         val prompt =
                             "Write a english level determination quiz, 11 questions,only questions and 4 options per each"
                         val response = generativeModel.generateContent(synonymsPrompt)
@@ -135,5 +140,17 @@ class PracticeScreenViewModel @Inject constructor(
                 }
             }
         }
+    }
+    fun clearResultState() {
+        _resultScreenUiState.value = _resultScreenUiState.value.copy(
+            correctCount = null
+        )
+    }
+    fun clearState() {
+        _questionList.value = _questionList.value.copy(
+            questionList = emptyList(),
+            questions = "",
+            isLoading = false
+        )
     }
 }

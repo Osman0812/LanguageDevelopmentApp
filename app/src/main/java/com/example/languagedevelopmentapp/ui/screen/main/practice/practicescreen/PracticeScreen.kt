@@ -62,7 +62,8 @@ fun PracticeScreen(
     ) {
         TopScreen(
             navigateToBack,
-            remainingTime = remainingTime
+            remainingTime = remainingTime,
+            onClearState = viewModel::clearState
         )
         BodyScreen(
             modifier = Modifier
@@ -71,7 +72,7 @@ fun PracticeScreen(
             questionList = questionList.value.questionList,
             onStartCountDown = viewModel::startCountdown,
             navigateToResultScreen = navigateToResultScreen,
-            onGetUserResult = viewModel::getUserLevel
+            onGetUserResult = viewModel::getUserLevel,
         )
     }
 }
@@ -81,7 +82,8 @@ fun PracticeScreen(
 fun TopScreen(
     navigateToBack: () -> Unit,
     remainingTime: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClearState: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -96,7 +98,10 @@ fun TopScreen(
         ) {
             Row {
                 CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                    IconButton(onClick = { navigateToBack() }) {
+                    IconButton(onClick = {
+                        navigateToBack()
+                        onClearState()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back Icon",
@@ -131,7 +136,7 @@ fun BodyScreen(
     questionList: List<Question>,
     onStartCountDown: (Int) -> Unit,
     navigateToResultScreen: () -> Unit,
-    onGetUserResult: (List<String>) -> Unit
+    onGetUserResult: (List<String>) -> Unit,
 ) {
     var questionNo by remember {
         mutableIntStateOf(0)

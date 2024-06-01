@@ -103,6 +103,8 @@ fun ResultScreen(
                             .align(Alignment.CenterHorizontally),
                         onClick = {
                             isShowDialog = !isShowDialog
+                            practiceScreenViewModel.clearState()
+                            practiceScreenViewModel.clearResultState()
                             //navigateToHomeScreen()
                         },
                         text = "Bitir"
