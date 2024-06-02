@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.languagedevelopmentapp.BuildConfig
+import com.example.languagedevelopmentapp.ui.screen.main.profile.ProfileUiState
 import com.example.languagedevelopmentapp.ui.screen.resultscreen.ResultScreenUiModel
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Firebase
@@ -40,6 +41,9 @@ class PracticeScreenViewModel @Inject constructor(
     private val _resultScreenUiState = MutableStateFlow(ResultScreenUiModel())
     val resultScreenUiState = _resultScreenUiState.asStateFlow()
 
+    private val _userInfo = MutableStateFlow(ProfileUiState())
+    val userInfo = _userInfo.asStateFlow()
+
     private val firestore = Firebase.firestore
     private val wordsReference = firestore.collection("Words")
     fun startCountdown(time: Int) {
@@ -53,16 +57,18 @@ class PracticeScreenViewModel @Inject constructor(
     }
 
     fun getQuestions(testName: String) {
+        viewModelScope.launch {
+            _userInfo.value = _userInfo.value.copy(level = testName)
             val words = mutableListOf<String>()
             wordsReference.get()
-                .addOnSuccessListener {result->
+                .addOnSuccessListener { result ->
                     for (document in result) {
                         words.add(document.id)
                     }
                 }
                 .addOnCompleteListener {
                     viewModelScope.launch {
-                        Log.d("words",words.toString())
+                        Log.d("words", words.toString())
                         val synonymsPrompt =
                             "I want to learn $testName of $words,prepare quiz, 11 questions,only questions and 4 options per each. You may ask with sentences like usage in sentences with examples." +
                                     "Example format:" +
@@ -78,7 +84,7 @@ class PracticeScreenViewModel @Inject constructor(
                         parseQuestions(response.text ?: "")
                     }
                 }
-
+        }
     }
 
     fun getUserLevel(answers: List<String>) {
@@ -141,11 +147,13 @@ class PracticeScreenViewModel @Inject constructor(
             }
         }
     }
+
     fun clearResultState() {
         _resultScreenUiState.value = _resultScreenUiState.value.copy(
             correctCount = null
         )
     }
+
     fun clearState() {
         _questionList.value = _questionList.value.copy(
             questionList = emptyList(),

@@ -87,7 +87,12 @@ fun ProfileScreen(
                     onClick = {
                         navController.apply {
                             popBackStack()
-                            navigate(Graph.AUTH)
+                            navigate(Graph.AUTH) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
                         }
                     }
                 ),

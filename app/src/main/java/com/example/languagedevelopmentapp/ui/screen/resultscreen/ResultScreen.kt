@@ -18,6 +18,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ fun ResultScreen(
 ) {
     val resultState = practiceScreenViewModel.resultScreenUiState.collectAsState().value
     val userInfo by prePracticeScreenViewModel.userInfo.collectAsState()
+    val testName by practiceScreenViewModel.userInfo.collectAsState()
     var isShowDialog by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
@@ -121,13 +123,13 @@ fun ResultScreen(
                 }
             }
         }
-        if (isShowDialog && userInfo.level == "Unknown") {
+        if (isShowDialog) {
             BadgeAlert(
                 modifier = Modifier
                     .alpha(0.9f)
                     .background(color = Color.White, shape = RoundedCornerShape(10.dp)),
                 onChangeIsShowDialog = { isShowDialog = it },
-                userLevel = userInfo.level.toString(),
+                userLevel = testName.level.toString(),
                 navigateToHomeScreen = navigateToHomeScreen,
                 onUpdateUserInfo = prePracticeScreenViewModel::saveInfoToFirebase
             )
@@ -146,13 +148,23 @@ fun BadgeAlert(
     onUpdateUserInfo: (ProfileUiState) -> Unit
 ) {
     val listAch = emptyList<Int>().toMutableList()
+    LaunchedEffect(key1 = Unit) {
+        if (userLevel == "Synonyms") {
+            listAch.add(R.drawable.ic_badge_1)
+        } else if (userLevel == "Antonyms") {
+            listAch.add(R.drawable.ic_badge_2)
+        } else if (userLevel == "Close Meaning") {
+            listAch.add(R.drawable.ic_badge_3)
+        } else {
+            listAch.add(R.drawable.ic_badge_2)
+        }
+        onUpdateUserInfo(ProfileUiState(level = userLevel, achievements = listAch))
+    }
     Log.d("userInfo", userLevel)
     androidx.compose.ui.window.Dialog(
         onDismissRequest = {
-            if (userLevel == "Unknown") {
-                listAch.add(R.drawable.ic_badge_1)
-                onUpdateUserInfo(ProfileUiState(level = "Beginner", achievements = listAch))
-            }
+            listAch.add(R.drawable.ic_badge_1)
+            onUpdateUserInfo(ProfileUiState(level = userLevel, achievements = listAch))
             onChangeIsShowDialog(false)
             navigateToHomeScreen()
         }
@@ -161,30 +173,38 @@ fun BadgeAlert(
             modifier = modifier,
             verticalArrangement = Arrangement.Center
         ) {
-            if (userLevel == "Unknown") {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Tebrikler!",
-                        style = MaterialTheme.typography.displayMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(15.dp))
-                Text(text = "Kazanılan Başarılar:")
-                Spacer(modifier = Modifier.height(10.dp))
-                Image(
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .size(80.dp),
-                    painter = painterResource(id = R.drawable.ic_badge_1),
-                    contentDescription = "First Badge"
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Tebrikler!",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
             }
+
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(text = "Kazanılan Başarılar:")
+            Spacer(modifier = Modifier.height(10.dp))
+            Image(
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .size(80.dp),
+                painter =
+                if (userLevel == "Synonyms") {
+                    painterResource(id = R.drawable.ic_badge_1)
+                } else if (userLevel == "Antonyms") {
+                    painterResource(id = R.drawable.ic_badge_2)
+                } else if (userLevel == "Close Meaning") {
+                    painterResource(id = R.drawable.ic_badge_3)
+                } else {
+                    painterResource(id = R.drawable.ic_avatar)
+                },
+                contentDescription = "First Badge"
+            )
+
         }
     }
 }

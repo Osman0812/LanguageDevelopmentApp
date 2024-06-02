@@ -9,6 +9,7 @@ import com.example.languagedevelopmentapp.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
@@ -29,6 +30,8 @@ class HomeScreenViewModel @Inject constructor(
 
     private var _wordState = MutableStateFlow(HomeScreenUiModel())
     var wordState = _wordState.asStateFlow()
+
+    private val auth = FirebaseAuth.getInstance()
 
     val modelManager = RemoteModelManager.getInstance()
     private val generativeModel = GenerativeModel(
@@ -96,7 +99,7 @@ class HomeScreenViewModel @Inject constructor(
             map["date"] = Timestamp.now()
             val firestore = Firebase.firestore
             Log.d("wordState", wordState.word)
-            val reference = firestore.collection("Words").document(wordState.word)
+            val reference = firestore.collection("Users").document(auth.currentUser?.email.toString()).collection("Words").document(wordState.word)
             reference.get()
                 .addOnSuccessListener { docSnap ->
                     if (docSnap.exists()) {

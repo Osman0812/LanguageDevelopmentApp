@@ -9,6 +9,7 @@ import com.example.languagedevelopmentapp.BuildConfig
 import com.example.languagedevelopmentapp.ui.screen.main.practice.prepracticescreen.PrePracticeUiModel
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.google.mlkit.common.model.DownloadConditions
@@ -35,6 +36,8 @@ class ReadingScreenViewModel @Inject constructor(
     private val _prePracticeModel = MutableStateFlow(PrePracticeUiModel())
     val prePracticeModel = _prePracticeModel.asStateFlow()
 
+    private val auth = FirebaseAuth.getInstance()
+
 
     val modelManager = RemoteModelManager.getInstance()
     val wordList = mutableListOf<String>()
@@ -49,7 +52,7 @@ class ReadingScreenViewModel @Inject constructor(
         viewModelScope.launch {
             val firestore = Firebase.firestore
             val wordStringBuilder = StringBuilder()
-            firestore.collection("Words")
+            firestore.collection("Users").document(auth.currentUser?.email.toString()).collection("Words")
                 .get()
                 .addOnSuccessListener { documents ->
                     for (document in documents) {
@@ -91,7 +94,7 @@ class ReadingScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val db = FirebaseFirestore.getInstance()
-                val snapshot = db.collection("Lists").get().await()
+                val snapshot = db.collection("Users").document(auth.currentUser?.email.toString()).collection("Lists").get().await()
                 val names = snapshot.documents.map { it.id }
                 _prePracticeModel.value = _prePracticeModel.value.copy(readingScreenLists = names)
             } catch (e: Exception) {
@@ -139,7 +142,7 @@ class ReadingScreenViewModel @Inject constructor(
                 "word" to word,
                 "addedAt" to System.currentTimeMillis()
             )
-            firestore.collection("Lists").document(listId).collection("words").document(word)
+            firestore.collection("Users").document(auth.currentUser?.email.toString()).collection("Lists").document(listId).collection("words").document(word)
                 .set(wordData)
                 .addOnSuccessListener { documentReference ->
                     Toast.makeText(

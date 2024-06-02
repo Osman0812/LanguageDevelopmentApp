@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,20 +20,38 @@ class VocabularyScreenViewModel @Inject constructor(
     private val application: Application
 ) : AndroidViewModel(application) {
 
+    private val auth = FirebaseAuth.getInstance()
     private val firestore = Firebase.firestore
-    private val reference = firestore.collection("Words")
+    private var reference = firestore.collection("Users").document(auth.currentUser?.email.toString())
 
     private val _wordListState = MutableStateFlow(VocabularyUiModel())
     val wordListState = _wordListState.asStateFlow()
+    private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val user = firebaseAuth.currentUser
+        user?.email?.let { email ->
+            reference = firestore.collection("Users").document(email)
+            getWords()
+            getLists()
+        }
+    }
 
     init {
-        getWords()
-        getLists()
+        auth.addAuthStateListener(authStateListener)
+        val user = auth.currentUser
+        user?.email?.let { email ->
+            reference = firestore.collection("Users").document(email)
+            getWords()
+            getLists()
+        }
+    }
+    override fun onCleared() {
+        super.onCleared()
+        auth.removeAuthStateListener(authStateListener)
     }
 
     fun getWords() {
         viewModelScope.launch {
-            reference.get().addOnSuccessListener { snapshot ->
+            reference.collection("Words").get().addOnSuccessListener { snapshot ->
                 val documents = snapshot.documents
                 val updatedList = mutableListOf<Pair<String, String>>()
                 val updatedSynonyms = mutableListOf<List<HashMap<String, String>>>()
@@ -61,7 +80,7 @@ class VocabularyScreenViewModel @Inject constructor(
     fun getLists() {
         viewModelScope.launch {
             try {
-                val result = firestore.collection("Lists").get().await()
+                val result = reference.collection("Lists").get().await()
                 val listNames = result.documents.mapNotNull { it.getString("name") }
                 _wordListState.value = _wordListState.value.copy(listNames = listNames)
             } catch (e: Exception) {
@@ -73,7 +92,7 @@ class VocabularyScreenViewModel @Inject constructor(
     fun getWordsOfList(listName: String) {
         viewModelScope.launch {
             try {
-                firestore.collection("Lists").document(listName).collection("words").get()
+                reference.collection("Lists").document(listName).collection("words").get()
                     .addOnSuccessListener { result ->
                         val words = result.documents.map { it.id }
                         val updatedWordList = _wordListState.value.wordsOfList.toMutableList()
@@ -98,7 +117,7 @@ class VocabularyScreenViewModel @Inject constructor(
                 "name" to listName,
                 "createdAt" to System.currentTimeMillis()
             )
-            firestore.collection("Lists").document(listName)
+            reference.collection("Lists").document(listName)
                 .set(listData)
                 .addOnSuccessListener {
                     Toast.makeText(
